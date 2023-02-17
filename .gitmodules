@@ -4,3 +4,6 @@
 [submodule "aur/linux-aarch64-orangepi5"]
 	path = aur/linux-aarch64-orangepi5
 	url = https://aur.archlinux.org/linux-aarch64-orangepi5.git
+[submodule "aur/yay"]
+	path = aur/yay
+	url = https://aur.archlinux.org/yay.git
