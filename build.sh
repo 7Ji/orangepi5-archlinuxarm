@@ -4,6 +4,7 @@
 . common/scripts/config.sh
 # Local config
 disk_label='gpt'
+disk_split='100M'
 pacstrap_from_repo_pkgs+=(
   'linux-firmware: optional firmware for some devices'
 )
