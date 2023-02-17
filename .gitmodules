@@ -1,3 +1,6 @@
 [submodule "common"]
 	path = common
 	url = https://github.com/7Ji/alarm-builder-common.git
+[submodule "aur/linux-aarch64-orangepi5"]
+	path = aur/linux-aarch64-orangepi5
+	url = https://aur.archlinux.org/linux-aarch64-orangepi5.git
