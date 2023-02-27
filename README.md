@@ -10,7 +10,7 @@ Download a release from the [releasge page](https://github.com/7Ji/orangepi5-arc
    - **Rockchip bootloader not included to save space**, it is expected to be installed by yourself on SPI flash beforehand with the tools provided in either OrangePi's Debian/Ubuntu or official Armbian
  - `ArchLinuxARM-aarch64-OrangePi5-*-root.tar.xz`
    - a compressed rootfs archive of stuffs in the above image which you should extract to a partitioned disk
-     - `bsdtar -C /mnt/yourMountPoint -xvpJf ArchLinuxARM-aarch64-OrangePi5-*-root.tar.xz`
+     - `bsdtar -C /mnt/yourMountPoint --acls --xattrs -xvpJf ArchLinuxARM-aarch64-OrangePi5-*-root.tar.xz`
    - partition layout non-exist, you should partition the card (**must be GPT**) and format the partitions in whatever way you like it
    - `/etc/fstab` and `/boot/extlinux/extlinux.conf` should be updated to reflect the actual disk layout
    - **Rockchip bootloader not included to save space**, it is expected to be installed by yourself on SPI flash beforehand with the tools provided in either OrangePi's Debian/Ubuntu or official Armbian
