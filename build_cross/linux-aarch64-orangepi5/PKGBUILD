@@ -1,0 +1,56 @@
+# Maintainer: 7Ji <pugokughin@gmail.com>
+
+_desc="AArch64 vendor kernel for Orange Pi 5. Cross-build alternative"
+pkgbase=linux-aarch64-orangepi5
+pkgname=(
+  "${pkgbase}"
+  "${pkgbase}-headers"
+)
+pkgver=5.10.110
+pkgrel=2
+arch=('aarch64')
+url="https://github.com/orangepi-xunlong/linux-orangepi"
+license=('GPL2')
+options=(!strip)
+source=(
+  "kernel.tar.gz"
+  'dtbs.tar.gz'
+  'headers.tar.gz'
+)
+sha256sums=(
+  'SKIP'
+  'SKIP'
+  'SKIP'
+)
+noextract=("${source[@]##*/}")
+
+_package() {
+  pkgdesc="The Linux Kernel and module - ${_desc}"
+  depends=(
+    'coreutils'
+    'initramfs'
+    'kmod'
+  )
+  optdepends=(
+    'uboot-legacy-initrd-hooks: to generate uboot legacy initrd images'
+    'linux-firmware: firmware images needed for some devices'
+    'wireless-regdb: to set the correct wireless channels of your country'
+  )
+  backup=(
+    "etc/mkinitcpio.d/${pkgbase}.preset"
+  )
+  tar -C "${pkgdir}" -xzf "${srcdir}/kernel.tar.gz"
+  tar -C "${pkgdir}" -xzf "${srcdir}/dtbs.tar.gz"
+}
+
+_package-headers() {
+  pkgdesc="Header files and scripts for building modules for linux kernel - ${_desc}"
+  tar -C "${pkgdir}" -xzf "${srcdir}/headers.tar.gz"
+}
+
+for _p in "${pkgname[@]}"; do
+  eval "package_$_p() {
+    $(declare -f "_package${_p#$pkgbase}")
+    _package${_p#$pkgbase}
+  }"
+done

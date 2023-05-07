@@ -1,20 +1,10 @@
 #!/bin/bash -e
 
-# Common config
-. common/scripts/config.sh
-# Local config
-disk_label='gpt'
-disk_split='100M'
-pacstrap_from_repo_pkgs+=(
-  'linux-firmware: optional firmware for some devices'
-)
-name_distro+='-OrangePi5'
-release_note_packages+=(
-  'linux-aarch64-orangepi5:[my AUR][AUR linux-aarch64-orangepi5]'
-  'yay:[AUR][AUR yay]'
-)
+# Read config
+. config.sh
 # Common functions
-. common/functions/build.sh
+. common/functions/relative_source.sh
+relative_source common/functions/build.sh
 # Overload common functions
 prepare_blob() { :; }
 populate_blob() {
