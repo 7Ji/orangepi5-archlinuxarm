@@ -13,9 +13,9 @@ url="https://github.com/orangepi-xunlong/linux-orangepi"
 license=('GPL2')
 options=(!strip)
 source=(
-  "kernel.tar.gz"
-  'dtbs.tar.gz'
-  'headers.tar.gz'
+  "kernel.tar"
+  'dtbs.tar'
+  'headers.tar'
 )
 sha256sums=(
   'SKIP'
@@ -39,13 +39,13 @@ _package() {
   backup=(
     "etc/mkinitcpio.d/${pkgbase}.preset"
   )
-  tar -C "${pkgdir}" -xzf "${srcdir}/kernel.tar.gz"
-  tar -C "${pkgdir}" -xzf "${srcdir}/dtbs.tar.gz"
+  tar -C "${pkgdir}" -xf "${srcdir}/kernel.tar"
+  tar -C "${pkgdir}" -xf "${srcdir}/dtbs.tar"
 }
 
 _package-headers() {
   pkgdesc="Header files and scripts for building modules for linux kernel - ${_desc}"
-  tar -C "${pkgdir}" -xzf "${srcdir}/headers.tar.gz"
+  tar -C "${pkgdir}" -xf "${srcdir}/headers.tar"
 }
 
 for _p in "${pkgname[@]}"; do
