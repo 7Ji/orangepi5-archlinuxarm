@@ -44,4 +44,6 @@ jobs:
         with:
           path: releases/ArchLinuxARM-aarch64-OrangePi5-*
           if-no-files-found: error
+      - name: Report build versions
+        run: cat releases/*.md
       
