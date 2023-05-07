@@ -41,11 +41,13 @@ _package() {
   )
   tar -C "${pkgdir}" -xf "${srcdir}/kernel.tar"
   tar -C "${pkgdir}" -xf "${srcdir}/dtbs.tar"
+  chown -R "$(id --user):$(id --group)" "${pkgdir}" # Otherwise fakeroot will be confused due to too many layers of chroot
 }
 
 _package-headers() {
   pkgdesc="Header files and scripts for building modules for linux kernel - ${_desc}"
   tar -C "${pkgdir}" -xf "${srcdir}/headers.tar"
+  chown -R "$(id --user):$(id --group)" "${pkgdir}" # Otherwise fakeroot will be confused due to too many layers of chroot
 }
 
 for _p in "${pkgname[@]}"; do
