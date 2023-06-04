@@ -31,6 +31,15 @@ jobs:
           for binary in c++ cc cpp g++ gcc; do
             sudo ln -sf ../../bin/distcc /usr/lib/distcc/aarch64-unknown-linux-gnu-${binary}
           done
+      - name: Cache Cross Build Environment and Packages
+        id: cache-cross
+        uses: actions/cache@v3
+        with:
+          path: |
+            cross/aarch64.*
+            cross/xtools_aarch64_on_x86_64.*
+            pkg
+          key: ${{ runner.os }}-cross
       - name: Cross build
         run: compressor=no ./cross.sh
       - name: Compress archives and images
@@ -39,6 +48,9 @@ jobs:
             xz -9 $i &
           done
           wait
+      - name: Pack AArch64 rootfs for caching
+        run: |
+          sudo bsdtar --strip-components=2 --acls --xattrs -czf cross/aarch64.tar.gz cross
       - name: Upload a Build Artifact
         uses: actions/upload-artifact@v3.1.2
         with:
