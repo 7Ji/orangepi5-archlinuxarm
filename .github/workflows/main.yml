@@ -31,15 +31,27 @@ jobs:
           for binary in c++ cc cpp g++ gcc; do
             sudo ln -sf ../../bin/distcc /usr/lib/distcc/aarch64-unknown-linux-gnu-${binary}
           done
-      - name: Cache Cross Build Environment and Packages
-        id: cache-cross
-        uses: actions/cache@v3
+      - name: Restore cached ArchLinuxARM AArch64 build root
+        id: cache-restore-alarm-aarch64-root
+        uses: actions/cache/restore@v3
         with:
-          path: |
-            cross/aarch64.*
-            cross/xtools_aarch64_on_x86_64.*
-            pkg
-          key: ${{ runner.os }}-cross
+          path: cross/aarch64.*
+          key: ${{ runner.os }}-alarm-aarch64-root
+          restore-keys: ${{ runner.os }}-alarm-aarch64-root
+      - name: Restore cached x86-64 Arch hosted AArch64 ArchLinuxARM toolchain
+        id: cache-restore-xtools-aarch64-on-x86_64
+        uses: actions/cache/restore@v3
+        with:
+          path: cross/xtools_aarch64_on_x86_64.*
+          key: ${{ runner.os }}-xtools-aarch64-on-x86_64
+          restore-keys: ${{ runner.os }}-xtools-aarch64-on-x86_64
+      - name: Restore cached pacakges
+        id: cache-restore-packages
+        uses: actions/cache/restore@v3
+        with:
+          path: pkg
+          key: ${{ runner.os }}-packages
+          restore-keys: ${{ runner.os }}-packages
       - name: Cross build
         run: compressor=no ./cross.sh
       - name: Compress archives and images
@@ -50,7 +62,25 @@ jobs:
           wait
       - name: Pack AArch64 rootfs for caching
         run: |
-          sudo bsdtar --strip-components=2 --acls --xattrs -czf cross/aarch64.tar.gz cross
+          sudo bsdtar --strip-components=2 --acls --xattrs -czf cross/aarch64.tar.gz cross/aarch64
+      - name: Save ArchLinuxARM AArch64 build root
+        id: cache-save-alarm-aarch64-root
+        uses: actions/cache/save@v3
+        with:
+          path: cross/aarch64.*
+          key: ${{ runner.os }}-alarm-aarch64-root-${{ hashFiles('cross/aarch64.*') }}
+      - name: Save x86-64 Arch hosted AArch64 ArchLinuxARM toolchain
+        id: cache-save-xtools-aarch64-on-x86_64
+        uses: actions/cache/save@v3
+        with:
+          path: cross/xtools_aarch64_on_x86_64.*
+          key: ${{ runner.os }}-xtools-aarch64-on-x86_64-${{ hashFiles('cross/xtools_aarch64_on_x86_64.*') }}
+      - name: Save pacakges
+        id: cache-save-packages
+        uses: actions/cache/save@v3
+        with:
+          path: pkg
+          key: ${{ runner.os }}-packages-${{ hashFiles('pkg') }}
       - name: Upload a Build Artifact
         uses: actions/upload-artifact@v3.1.2
         with:
