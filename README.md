@@ -1,7 +1,7 @@
 # ArchLinux ARM for Orange Pi 5
 
 ## Installation
-Download a release from the [releasge page](https://github.com/7Ji/orangepi5-archlinuxarm/releases). There're several different types of release to choose from:
+Download a release from the [releasge page](https://github.com/7Ji/orangepi5-archlinuxarm/releases) or [Actions](https://github.com/7Ji/orangepi5-archlinuxarm/actions). There're several different types of release to choose from:
  - `ArchLinuxARM-aarch64-OrangePi5-*.img.xz`
    - a compressed disk image which you could just decompress and write to disk
      - `xz -cdk < ArchLinuxARM-aarch64-OrangePi5-*.img.xz > /dev/theTargetDisk`
@@ -20,6 +20,12 @@ Download a release from the [releasge page](https://github.com/7Ji/orangepi5-arc
    - useful if you want to update your installation without compiling the packages by yourself
 
 ## Configuration
+### Bootup
+The default bootup configuration uses `/extlinux/extlinux.conf` and set `rk3588s-orangepi-5.dtb` as the DTB. **If you flash the `*.img` directly and you're using opi5, then you do not need to change anything**. However for any other combination (opi5 + *.tar, op5b + any, opi5plus + any), you need to adapt the bootup configuration:
+ - If you deploy the `*.tar` archive into a single root partition, where `/extlinux/extlinux.conf` supposed in a seperate `/boot` mount point is now stored as `/boot/extlinux/extlinux.conf` under mount point `/`, you need to edit the paths of kernel, initramfs and dtb in `extlinux.conf` to preix them with `/boot` to reflect their new paths
+ - If you're using orange pi 5 b/plus, you need to edit the `FDT=` line to change the DTB name to match your device.
+ - If you deploy the `*.tar` archive, and you've formatted the partitions by yourself, then the `root=UUID=xxxx` partition identifier will need to be updated to point to your actual root partition, `/etc/fstab` will also need to be updated
+
 ### Users
  - `root`'s default password is `alarm_please_change_me`, remember to change it upon first successful login  
  - A user `alarm` is created with its group set to `wheel`, able to use `sudo` with password, which is set to `alarm_please_change_me`, remember to change it upon first successful login
