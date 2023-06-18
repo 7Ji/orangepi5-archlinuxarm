@@ -1,4 +1,4 @@
-# ArchLinux ARM for Orange Pi 5
+# ArchLinux ARM for Orange Pi 5 / 5B / 5 plus
 
 ## Installation
 Download a release from the [releasge page](https://github.com/7Ji/orangepi5-archlinuxarm/releases) or [Actions](https://github.com/7Ji/orangepi5-archlinuxarm/actions). There're several different types of release to choose from:
