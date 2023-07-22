@@ -7,7 +7,7 @@ pkgname=(
   "${pkgbase}-headers"
 )
 pkgver=5.10.110
-pkgrel=3
+pkgrel=4
 arch=('aarch64')
 url="https://github.com/orangepi-xunlong/linux-orangepi"
 license=('GPL2')
