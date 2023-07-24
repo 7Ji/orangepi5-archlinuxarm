@@ -59,6 +59,13 @@ Remember to run a full system update upon first boot:
 ```
 yay
 ```
+
+**Note: some packages including the kernel package `linux-aarch64-orangepi5` are installed as local packages, as they are not available from the official repos, this means if you want to upgrade them, you'll have to do it one of the following ways:**
+ 1. Use AUR helpers like `yay`, they will build and install the packages for you. **You will have to spend a lot of time on building if your device or distcc network is not powerful enough.**
+    - For reference, on an actively cooled opi5 at stock frequency with 8G RAM, with a Samsung 960 EVO NVMe SSD as the build drive,  the average build time for the `linux-aarch64-oragepi5-5.10.110-4` alone is about 45 minutes.
+ 2. Download the build artifacts of the newest github action CI, unzip it and you'll get `*-pkgs.tar.xz`, you can extract all pre-built packages in the image, then use `pacman -U` to install them as local packages. **You do not need to build the packages**
+ 3. Add [my repo](https://github.com/7Ji/archrepo) as an additional pacman repo, read instructions on that repo on how to add it. You can then use `pacman -Syu` to update these packages. **You do not need to build the packages**
+
 ### Hostname
 The hostname is set to `alarm` by default, if you want to change that, edit `/etc/hostname`
 
