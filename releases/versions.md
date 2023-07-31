@@ -29,3 +29,4 @@ Build ID: 20230324_170919
 
 [AUR linux-aarch64-orangepi5]: https://aur.archlinux.org/packages/linux-aarch64-orangepi5
 [AUR yay]: http://aur.archlinux.org/packages/yay
+[AUR linux-firmware-orangepi]: https://aur.archlinux.org/packages/linux-firmware-orangepi

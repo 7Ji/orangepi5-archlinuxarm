@@ -7,3 +7,6 @@
 [submodule "aur/yay"]
 	path = build/yay
 	url = https://aur.archlinux.org/yay.git
+[submodule "build/linux-firmware-orangepi"]
+	path = build/linux-firmware-orangepi
+	url = https://aur.archlinux.org/linux-firmware-orangepi.git
