@@ -22,7 +22,7 @@ Download a release from the [releases page](https://github.com/7Ji/orangepi5-arc
 ## Configuration
 ### Bootup
 The default bootup configuration uses `/extlinux/extlinux.conf` and set `rk3588s-orangepi-5.dtb` as the DTB. **If you flash the `*.img` directly and you're using opi5, then you do not need to change anything**. However for any other combination (opi5 + *.tar, op5b + any, opi5plus + any), you need to adapt the bootup configuration:
- - If you deploy the `*.tar` archive into a single root partition, where `/extlinux/extlinux.conf` supposed in a seperate `/boot` mount point is now stored as `/boot/extlinux/extlinux.conf` under mount point `/`, you need to edit the paths of kernel, initramfs and dtb in `extlinux.conf` to preix them with `/boot` to reflect their new paths
+ - If you deploy the `*.tar` archive into a single root partition, where `/extlinux/extlinux.conf` supposed in a seperate `/boot` mount point is now stored as `/boot/extlinux/extlinux.conf` under mount point `/`, you need to edit the paths of kernel, initramfs and dtb in `extlinux.conf` to prefix them with `/boot` to reflect their new paths
  - If you're using orange pi 5 b/plus, you need to edit the `FDT=` line to change the DTB name to match your device.
  - If you deploy the `*.tar` archive, and you've formatted the partitions by yourself, then the `root=UUID=xxxx` partition identifier will need to be updated to point to your actual root partition, `/etc/fstab` will also need to be updated
  - If you're using `Btrfs` as the filesystem of your root partition, either use the default subvolume as the root mountpoint, or add `rootflags=subvol=subvolume` to the end of `APPEND` line, where `subvolume` should be replaced with your actual subvolume name.
