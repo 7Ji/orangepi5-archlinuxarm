@@ -25,7 +25,7 @@ The default bootup configuration uses `/extlinux/extlinux.conf` and set `rk3588s
  - If you deploy the `*.tar` archive into a single root partition, where `/extlinux/extlinux.conf` supposed in a seperate `/boot` mount point is now stored as `/boot/extlinux/extlinux.conf` under mount point `/`, you need to edit the paths of kernel, initramfs and dtb in `extlinux.conf` to prefix them with `/boot` to reflect their new paths
  - If you're using orange pi 5 b/plus, you need to edit the `FDT=` line to change the DTB name to match your device.
  - If you deploy the `*.tar` archive, and you've formatted the partitions by yourself, then the `root=UUID=xxxx` partition identifier will need to be updated to point to your actual root partition, `/etc/fstab` will also need to be updated
- - If you're using `Btrfs` as the filesystem of your root partition, either use the default subvolume as the root mountpoint, or add `rootflags=subvol=subvolume` to the end of `APPEND` line, where `subvolume` should be replaced with your actual subvolume name.
+ - If you deploy the `*.tar` archive into a **non-default** `Btrfs` subvolume as your rootfs, you need to add at least argument `rootflags=subvol=[subvolume]` to the `APPEND` line in `/boot/extlinux/extlinux.conf`, and update your `/` mountpoint specification in `/etc/fstab` with mounting option `subvol=[subvolume]` (`genfstab` should help you do the latter one). The variable `[subvolume]` should **be same in both files** and reflect the actual subvolume you're using.
 
 ### Users
  - `root`'s default password is `alarm_please_change_me`, remember to change it upon first successful login  
