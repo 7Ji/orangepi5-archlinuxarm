@@ -96,6 +96,35 @@ Or (if commented, the default value `prohibit-password` is used)
 #PermitRootLogin yes
 ```
 
+### GPU / 3D Acceleration
+The released images and rootfs/pkg archives in this repo are bare-minimum CLI images without any desktop environment.
+
+You can follow https://wiki.archlinux.org/title/Desktop_environment to install a desktop environment you like, ignoring any part related to GPU drivers. After installtion you should end up with `mesa` as your OpenGL library providing software-based `llvmpipe` rendering pipeline, which can be checked by running `glxinfo` in your DE.
+
+Assuming you've installed a DE and made sure you can enter the software-rendered desktop envinroment (so we can guarantee the only part that's not working is the OpenGL library), you can do the following steps to enable GPU accelration:
+
+  1. Add my repo following the instructions: https://github.com/7Ji/archrepo
+  2. Install panfork mesa:
+     ```
+     sudo pacman -Syu mesa-panfork-git
+     ```
+  3. Download the firmware for GPU
+     ```
+     wget https://github.com/JeffyCN/mirrors/raw/libmali/firmware/g610/mali_csffw.bin -O /tmp/mali_csffw.bin
+     sudo cp /tmp/mali_csffw.bin /usr/lib/firmware/
+     ```
+
+A reboot is neccessary if you've started any GPU work (e.g. entering your DE) during this boot.
+
+### Hardware-based video encoding/decoding
+
+A rockchip mpp (multi-media processing platform) enabled ffmpeg pacakge is also available from my repo that can do hardware based video encoding/decoding:
+
+1. Add my repo following the instructions: https://github.com/7Ji/archrepo
+2. Install ffmpeg-mpp:
+   ```
+   sudo pacman -Syu ffmpeg-mpp
+   ```
 
 ## Build
 The project needs to be built in a native ArchLinux ARM environment, which could be obtained through the image here or pacstrapping with the help of kernel packages here on Orange Pi 5 itself.
