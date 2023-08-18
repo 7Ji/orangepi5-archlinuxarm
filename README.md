@@ -96,36 +96,64 @@ Or (if commented, the default value `prohibit-password` is used)
 #PermitRootLogin yes
 ```
 
-### GPU / 3D Acceleration
+### Desktop environment
+
 The released images and rootfs/pkg archives in this repo are bare-minimum CLI images without any desktop environment.
 
 You can follow https://wiki.archlinux.org/title/Desktop_environment to install a desktop environment you like, ignoring any part related to GPU drivers. After installtion you should end up with `mesa` as your OpenGL library providing software-based `llvmpipe` rendering pipeline, which can be checked by running `glxinfo` in your DE.
 
-Assuming you've installed a DE and made sure you can enter the software-rendered desktop envinroment (so we can guarantee the only part that's not working is the OpenGL library), you can do the following steps to enable GPU accelration:
+### GPU / 3D Acceleration
+
+You can do the following steps to enable GPU accelration:
 
   1. Add my repo following the instructions: https://github.com/7Ji/archrepo
-  2. Install panfork mesa:
+  2. Install panfork mesa and the firmware:
      ```
-     sudo pacman -Syu mesa-panfork-git
+     sudo pacman -Syu mesa-panfork-git mali-valhall-g610-firmware
      ```
-  3. Download the firmware for GPU
-     ```
-     wget https://github.com/JeffyCN/mirrors/raw/libmali/firmware/g610/mali_csffw.bin -O /tmp/mali_csffw.bin
-     sudo cp /tmp/mali_csffw.bin /usr/lib/firmware/
-     ```
+     _`mesa-panfork-git` would replace `mesa` you've installed in the last step, when `pacman` asks you whether to replace it, agree it_
 
 A reboot is neccessary if you've started any GPU work (e.g. entering your DE) during this boot.
 
+#### Tuning
+
+_Addtioanlly, you can set `PAN_MESA_DEBUG=gofaster` environment to let the driver push your GPU to its limit, but as it takes more power and generates more heat, it's only recommended that you set such environment for demanding applications, not globally, unless you have active cooling. For reference, with this env, Minecraft 1.16.5 vanialla on my active cooled OPi5 goes from ~10fps to ~35fps_
+
+#### ARM proprietary blob GPU drivers
+
+Alongside the mainline, open-source panfork MESA, another choice to utilize your GPU to do hardware-backed rendering is to use the closed-source proprietary blob drivers. These are also available from https://github.com/7Ji/archrepo :
+```
+sudo pacman -Syu libmali-valhall-g610-{dummy,gbm,wayland-gbm,x11-gbm,x11-wayland-gbm}
+```
+As these drivers do not provide `OpenGL` but only `OpenGLES`, no mainstream DE would work with them, so I didn't set them as global library. You would need to manually specify the driver you want to use when running some program that runs with `OpenGLES`:
+```
+LD_LIBRARY_PATH=/usr/lib/mali-valhall-g610/x11-gbm [program]
+```
+_(Multiple variants of the driver could co-exist, you can use the one that meets your current use case)_
+
+For a more detailed list of which kind of blob drivers can be used in combination with `panfork` in X11 or Wayland, check upstream documentation: https://gitlab.com/panfork/mesa
+
+#### OpenGL translation layer for OpenGLES blob GPU drivers
+If you want to run OpenGL program with the blob GPU drivers, it won't work as the blob drivers only support OpenGLES, a subset of OpenGL that is mainly used on mobile platforms. You'll need a OpenGL translation layer, `gl4es`, which is also available from https://github.com/7Ji/archrepo :
+```
+sudo pacman -Syu gl4es-git
+```
+To run a program with the translation layer on top of the blob drivers:
+```
+LD_LIBRARY_PATH=/usr/lib/gl4es:/usr/lib/mali-valhall-g610/x11-gbm [program]
+```
+
+However, at least from my tests, the results could be even worse than panfork MESA with `gofaster` env, as the translation layer is pure software and is not very efficient.
+
+
 ### Hardware-based video encoding/decoding
 
-A rockchip mpp (multi-media processing platform) enabled ffmpeg pacakge is also available from my repo that can do hardware based video encoding/decoding:
+A rockchip mpp (multi-media processing platform) enabled ffmpeg pacakge is also available from https://github.com/7Ji/archrepo that can do hardware based video encoding/decoding, it could be used directly for transcoding, and should also effortlessly make any video players that depend on it do hardware encoding/decoding.
+```
+sudo pacman -Syu ffmpeg-mpp
+```
 
-1. Add my repo following the instructions: https://github.com/7Ji/archrepo
-2. Install ffmpeg-mpp:
-   ```
-   sudo pacman -Syu ffmpeg-mpp
-   ```
-3. Addtionally, install ffmpeg4.4-mpp, if you want to use `VLC` (basically the only video player that still uses `ffmpeg4.4` in Arch repo):
+Addtionally, install ffmpeg4.4-mpp, if you want to use `VLC` (basically the only video player that still uses `ffmpeg4.4` in Arch repo):
    ```
    sudo pacman -Syu ffmpeg4.4-mpp
    ```
