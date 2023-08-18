@@ -125,6 +125,10 @@ A rockchip mpp (multi-media processing platform) enabled ffmpeg pacakge is also 
    ```
    sudo pacman -Syu ffmpeg-mpp
    ```
+3. Addtionally, install ffmpeg4.4-mpp, if you want to use `VLC` (basically the only video player that still uses `ffmpeg4.4` in Arch repo):
+   ```
+   sudo pacman -Syu ffmpeg4.4-mpp
+   ```
 
 ## Build
 The project needs to be built in a native ArchLinux ARM environment, which could be obtained through the image here or pacstrapping with the help of kernel packages here on Orange Pi 5 itself.
