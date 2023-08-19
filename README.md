@@ -117,7 +117,7 @@ A reboot is neccessary if you've started any GPU work (e.g. entering your DE) du
 
 #### Tuning
 
-_Addtioanlly, you can set `PAN_MESA_DEBUG=gofaster` environment to let the driver push your GPU to its limit, but as it takes more power and generates more heat, it's only recommended that you set such environment for demanding applications, not globally, unless you have active cooling. For reference, with this env, Minecraft 1.16.5 vanialla on my active cooled OPi5 goes from ~10fps to ~35fps_
+_Addtioanlly, you can set `PAN_MESA_DEBUG=gofaster` environment to let the driver push your GPU to its limit, but as it takes more power and generates more heat, it's only recommended that you set such environment for demanding applications, not globally, unless you have active cooling. For reference, with this env, Minecraft 1.16.5 vanilla on my active cooled OPi5 goes from ~10fps to ~35fps_
 
 #### ARM proprietary blob GPU drivers
 
