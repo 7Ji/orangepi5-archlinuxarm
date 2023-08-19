@@ -145,6 +145,17 @@ LD_LIBRARY_PATH=/usr/lib/gl4es:/usr/lib/mali-valhall-g610/x11-gbm [program]
 
 However, at least from my tests, the results could be even worse than panfork MESA with `gofaster` env, as the translation layer is pure software and is not very efficient.
 
+#### Performance comparison
+Here're a few performance comparisons for the drivers:
+ - http://webglsamples.org/aquarium/aquarium.html , a WebGL demo, default setting
+   - panfork mesa, stock, `chromium`, 35~40 fps
+   - panfork mesa, gofaster, `PAN_MESA_DEBUG=gofaster chromium`, ~ 60fps (limtied by vsync)
+   - blob, `LD_LIBRARY_PATH=/usr/lib/mali-valhall-g610/x11-gbm chromium --use-gl=egl`, 95~120 fps
+
+ - Minecraft 1.16.5, vanilla, default setting:
+   - panfork mesa, stock, ~10fps
+   - panfork mesa, gofaster, ~35fps
+   - blob, `LD_LIBRARY_PATH=/usr/lib/gl4es:/usr/lib/mali-valhall-g610/x11-gbm hmcl`, ~21fps
 
 ### Hardware-based video encoding/decoding
 
