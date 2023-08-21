@@ -111,7 +111,8 @@ You can do the following steps to enable GPU accelration:
      ```
      sudo pacman -Syu mesa-panfork-git mali-valhall-g610-firmware
      ```
-     _`mesa-panfork-git` would replace `mesa` you've installed in the last step, when `pacman` asks you whether to replace it, agree it_
+     _`mesa-panfork-git` would replace `mesa` you've installed in the last step, when `pacman` asks you whether to replace it, agree it_  
+     _Also available on AUR: https://aur.archlinux.org/packages/mesa-panfork-git https://aur.archlinux.org/pkgbase/libmali-valhall-g610_
 
 A reboot is neccessary if you've started any GPU work (e.g. entering your DE) during this boot.
 
@@ -125,6 +126,8 @@ Alongside the mainline, open-source panfork MESA, another choice to utilize your
 ```
 sudo pacman -Syu libmali-valhall-g610-{dummy,gbm,wayland-gbm,x11-gbm,x11-wayland-gbm}
 ```
+_Also available on AUR: https://aur.archlinux.org/pkgbase/libmali-valhall-g610_
+
 As these drivers do not provide `OpenGL` but only `OpenGLES`, no mainstream DE would work with them, so I didn't set them as global library. You would need to manually specify the driver you want to use when running some program that runs with `OpenGLES`:
 ```
 LD_LIBRARY_PATH=/usr/lib/mali-valhall-g610/x11-gbm [program]
@@ -138,6 +141,8 @@ If you want to run OpenGL program with the blob GPU drivers, it won't work as th
 ```
 sudo pacman -Syu gl4es-git
 ```
+_Also available on AUR: https://aur.archlinux.org/packages/gl4es-git_
+
 To run a program with the translation layer on top of the blob drivers:
 ```
 LD_LIBRARY_PATH=/usr/lib/gl4es:/usr/lib/mali-valhall-g610/x11-gbm [program]
@@ -163,11 +168,25 @@ A rockchip mpp (multi-media processing platform) enabled ffmpeg pacakge is also 
 ```
 sudo pacman -Syu ffmpeg-mpp
 ```
+_Also available on AUR: https://aur.archlinux.org/packages/ffmpeg-mpp_
 
 Addtionally, install ffmpeg4.4-mpp, if you want to use `VLC` (basically the only video player that still uses `ffmpeg4.4` in Arch repo):
    ```
    sudo pacman -Syu ffmpeg4.4-mpp
    ```
+   _Also available on AUR: https://aur.archlinux.org/packages/ffmpeg4.4-mpp_
+
+### Hardware video decoding web browser
+
+A rockchip mpp enabled Chromium package is also available from https://github.com/7Ji/archrepo, install it and you can do 8K H.264/HEVC/VP9/AV1 decoding on Youtube:
+```
+sudo pacman -Syu chromium-mpp
+```
+_Also available on AUR: https://aur.archlinux.org/packages/chromium-mpp_
+
+The package needs extra setup before running, which is documented [here](https://aur.archlinux.org/packages/chromium-mpp#comment-930317)
+
+_This Chromium package also supports running with blob drivers, same as how you would run offcial Chromium as docuemnted [above](#performance-comparison)_
 
 ## Build
 The project needs to be built in a native ArchLinux ARM environment, which could be obtained through the image here or pacstrapping with the help of kernel packages here on Orange Pi 5 itself.
