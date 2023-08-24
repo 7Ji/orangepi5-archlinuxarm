@@ -10,3 +10,6 @@
 [submodule "build/linux-firmware-orangepi"]
 	path = build/linux-firmware-orangepi
 	url = https://aur.archlinux.org/linux-firmware-orangepi.git
+[submodule "build/usb2host"]
+	path = build/usb2host
+	url = https://github.com/7Ji-PKGBUILDs/usb2host.git
