@@ -1,9 +1,12 @@
 # Common config
 . common/scripts/config.sh
 # Local config
+name_distro+='-OrangePi5'
 disk_label='gpt'
 disk_split='100M'
-name_distro+='-OrangePi5'
+enable_systemd_units+=(
+  'usb2host.service'
+)
 release_note_packages+=(
   'linux-aarch64-orangepi5:[my AUR][AUR linux-aarch64-orangepi5]'
   'linux-firmware-orangepi:[my AUR][AUR linux-firmware-orangepi]'
