@@ -7,7 +7,6 @@ Download a release from the [releases page](https://github.com/7Ji/orangepi5-arc
      - `xz -cdk < ArchLinuxARM-aarch64-OrangePi5-*.img.xz > /dev/theTargetDisk`
    - partition layout and filesystems are pre-determined and you can't easily change (remember to enlarge the root partition)
    - booting configuration already set and ready to go, just plug in the card and it will boot right into the system
-   - **Rockchip bootloader not included to save space**, it is expected to be installed by yourself on SPI flash beforehand with the tools provided in either OrangePi's Debian/Ubuntu or official Armbian
  - `ArchLinuxARM-aarch64-OrangePi5-*-root.tar.xz`
    - a compressed rootfs archive of stuffs in the above image which you should extract to a partitioned disk
      - `bsdtar -C /mnt/yourMountPoint --acls --xattrs -xvpJf ArchLinuxARM-aarch64-OrangePi5-*-root.tar.xz`
