@@ -2,19 +2,19 @@
 
 ## Installation
 Download a release from the [releases page](https://github.com/7Ji/orangepi5-archlinuxarm/releases) or [Actions](https://github.com/7Ji/orangepi5-archlinuxarm/actions). There're several different types of release to choose from:
- - `ArchLinuxARM-aarch64-OrangePi5-*.img.xz`
+ - `ArchLinuxARM-aarch64-OrangePi5-*.img.gz`
    - a compressed disk image which you could just decompress and write to disk
-     - `xz -cdk < ArchLinuxARM-aarch64-OrangePi5-*.img.xz > /dev/theTargetDisk`
+     - `gzip -cdk < ArchLinuxARM-aarch64-OrangePi5-*.img.gz > /dev/theTargetDisk`
    - partition layout and filesystems are pre-determined and you can't easily change (remember to enlarge the root partition)
    - booting configuration already set and ready to go, just plug in the card and it will boot right into the system
    - **Rockchip bootloader not included to save space**, it is expected to be installed by yourself on SPI flash beforehand with the tools provided in either OrangePi's Debian/Ubuntu or official Armbian
- - `ArchLinuxARM-aarch64-OrangePi5-*-root.tar.xz`
+ - `ArchLinuxARM-aarch64-OrangePi5-*-root.tar.gz`
    - a compressed rootfs archive of stuffs in the above image which you should extract to a partitioned disk
-     - `bsdtar -C /mnt/yourMountPoint --acls --xattrs -xvpJf ArchLinuxARM-aarch64-OrangePi5-*-root.tar.xz`
+     - `bsdtar -C /mnt/yourMountPoint --acls --xattrs -xvpzf ArchLinuxARM-aarch64-OrangePi5-*-root.tar.gz`
    - partition layout non-exist, you should partition the card (**must be GPT**) and format the partitions in whatever way you like it
    - `/etc/fstab` and `/boot/extlinux/extlinux.conf` should be updated to reflect the actual disk layout
    - **Rockchip bootloader not included to save space**, it is expected to be installed by yourself on SPI flash beforehand with the tools provided in either OrangePi's Debian/Ubuntu or official Armbian
- - `ArchLinuxARM-aarch64-OrangePi5-*-pkgs.tar.xz`
+ - `ArchLinuxARM-aarch64-OrangePi5-*-pkgs.tar.gz`
    - a compressed archive of AUR packages installed into the above image
    - useful if you want to `pacstrap` an installation without the above image
    - useful if you want to update your installation without compiling the packages by yourself

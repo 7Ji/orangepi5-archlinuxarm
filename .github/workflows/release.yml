@@ -34,4 +34,4 @@ jobs:
          body_path: note
          name: Nightly
          tag_name: nightly
-         files: ArchLinuxARM-aarch64-OrangePi5-*.xz
+         files: ArchLinuxARM-aarch64-OrangePi5-*.gz

@@ -58,7 +58,7 @@ jobs:
       - name: Compress archives and images
         run: |
           for i in releases/*.{tar,img}; do
-            xz -9 $i &
+            gzip -9 $i &
           done
           wait
       - name: Pack AArch64 rootfs for caching
