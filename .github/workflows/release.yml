@@ -20,9 +20,9 @@ jobs:
        run: ls -R
      - name: Generate release note
        run: |
-         cat releases/*.md > note
+         cat *.md > note
          cat >> note << _EOF_
-         
+
          [AUR linux-aarch64-orangepi5]: https://aur.archlinux.org/packages/linux-aarch64-orangepi5
          [AUR yay]: http://aur.archlinux.org/packages/yay
          [AUR linux-firmware-orangepi]: https://aur.archlinux.org/packages/linux-firmware-orangepi
