@@ -10,5 +10,6 @@ enable_systemd_units+=(
 release_note_packages+=(
   'linux-aarch64-orangepi5:[my AUR][AUR linux-aarch64-orangepi5]'
   'linux-firmware-orangepi:[my AUR][AUR linux-firmware-orangepi]'
+  'usb2host:[my AUR][AUR usb2host]'
   'yay:[AUR][AUR yay]'
 )

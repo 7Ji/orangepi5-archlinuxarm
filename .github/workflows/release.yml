@@ -24,8 +24,9 @@ jobs:
          cat >> note << _EOF_
 
          [AUR linux-aarch64-orangepi5]: https://aur.archlinux.org/packages/linux-aarch64-orangepi5
-         [AUR yay]: http://aur.archlinux.org/packages/yay
          [AUR linux-firmware-orangepi]: https://aur.archlinux.org/packages/linux-firmware-orangepi
+         [AUR usb2host]: http://aur.archlinux.org/packages/usb2host
+         [AUR yay]: http://aur.archlinux.org/packages/yay
          _EOF_
      - name: Release
        uses: softprops/action-gh-release@v1
@@ -33,4 +34,4 @@ jobs:
          body_path: note
          name: Nightly
          tag_name: nightly
-         files: releases/ArchLinuxARM-aarch64-OrangePi5-*.xz
+         files: ArchLinuxARM-aarch64-OrangePi5-*.xz
