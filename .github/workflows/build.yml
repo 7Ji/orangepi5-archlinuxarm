@@ -1,5 +1,6 @@
 name: Build ArchLinuxARM for Orange Pi 5 with vendor kernel
 on:
+  workflow_call:
   push:
     branches: [ "master" ]
   pull_request:
