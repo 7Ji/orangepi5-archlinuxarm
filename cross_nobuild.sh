@@ -20,7 +20,7 @@ if [[ "${use_local_mirror}" ]]; then
 fi
 
 # Everything will be done in a subfolder
-mkdir -p cross_nobuild/{bin,cache,img,rkloader}
+mkdir -p cross_nobuild/{bin,cache,out,rkloader}
 pushd cross_nobuild
 
 # Get rkloaders
@@ -88,16 +88,16 @@ Server = ${repo_url_7Ji_aarch64}
 _EOF_
 
 # Basic image layout
-rm -f img/base.img
-truncate -s 2G img/base.img
-sfdisk img/base.img << _EOF_
-label: gpt
+build_id=ArchLinuxARM-aarch64-OrangePi5-$(date +%Y%m%d_%H%M%S)
+rm -f out/"${build_id}"-base.img
+truncate -s 2G out/"${build_id}"-base.img
+table='label: gpt
 start=8192, size=204800, type=C12A7328-F81F-11D2-BA4B-00A0C93EC93B
-start=212992, size=3979264, type=B921B045-1DF0-41C3-AF44-4C6F280D3FAE
-_EOF_
+start=212992, size=3979264, type=B921B045-1DF0-41C3-AF44-4C6F280D3FAE'
+sfdisk out/${build_id}-base.img <<< "${table}"
 
 # Partition
-lodev=$(sudo losetup --find --partscan --show img/base.img)
+lodev=$(sudo losetup --find --partscan --show out/base.img)
 uuid_root=$(uuidgen)
 uuid_boot_mkfs=$(uuidgen)
 uuid_boot_mkfs=${uuid_boot_mkfs::8}
@@ -131,6 +131,8 @@ run_in_chroot pacman-key --init
 run_in_chroot pacman-key --populate
 run_in_chroot pacman-key --recv-keys BA27F219383BB875
 run_in_chroot pacman-key --lsign BA27F219383BB875
+# Pacman-key expects to run in an actual system, it pulled up gpg-agent and it kept running
+run_in_chroot killall gpg-agent dirmngr
 
 # Non-base packages
 kernel='linux-aarch64-orangepi5'
@@ -190,6 +192,39 @@ printf \
 
 # Clean up
 sudo rm -rf "${root}"/var/cache/pacman/pkg/*
+sudo rm -f "${root}"/boot/initramfs-linux-aarch64-orangepi5.img
+sudo dd if=/dev/zero of="${root}"/.zerofill bs=16M || true
+sudo dd if=/dev/zero of="${root}"/boot/.zerofill bs=16M || true
+sudo rm -f "${root}"/{,boot/}.zerofill
+# Root archive
+(
+    cd ${root}
+    sudo bsdtar --acls --xattrs -cpf - *
+) > img/"${build_id}"-root.tar
+# Release resources
 sudo umount -R "${root}"
 sudo losetup --detach "${lodev}"
+suffixes=(
+    'root.tar'
+    'base.img'
+)
+
+for rkloader in rkloaders; do
+    model=${rkloader##*pi-}
+    model=${model%%-bl31*}
+    # Use cp as it could reflink if the fs supports it
+    cp out/"${build_id}"-{base,"${model}"}.img
+    out=out/"${build_id}-${model}".img
+    dd if=rkloader/"${rkloader}" of="${out}" conv=notrunc
+    suffixes+=("${model}".img)
+    sfdisk "${out}" <<< "${table}"
+done
+
+rm -rf out/latest
+mkdir out/latest
+
+for suffix in "${suffixes[@]}"; do
+    gzip -9 out/"${build_id}-${suffix}" &
+    ln -s ../"${build_id}-${suffix}".gz out/latest/
+done
 popd
