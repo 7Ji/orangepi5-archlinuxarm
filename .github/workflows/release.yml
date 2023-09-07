@@ -1,0 +1,27 @@
+name: Release Build ArchLinuxARM for Orange Pi 5 with vendor kernel nightly
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '0 2 * * *' # run at 2 AM UTC
+permissions:
+  contents: write
+jobs:
+  build:
+    uses: ./.github/workflows/build.yml
+  release:
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+     - name: Download artifacts
+       uses: actions/download-artifact@v3
+       with:
+         name: artifact
+     - name: Display structure of downloaded files
+       run: ls -R
+     - name: Release
+       uses: softprops/action-gh-release@v1
+       with:
+         body_path: releases/ArchLinuxARM-aarch64-OrangePi5-*.md
+         name: Nightly
+         tag_name: nightly
+         files: releases/ArchLinuxARM-aarch64-OrangePi5-*.xz
