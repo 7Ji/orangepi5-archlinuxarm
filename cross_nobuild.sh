@@ -5,47 +5,159 @@
 # If you're running ALARM, then you should look at build.sh
 # If you're running Arch, then you should expect breakage due to Ubuntu FHS being expected
 
-
-# Mainly for pacman-static
-repo_url_archlinuxcn_x86_64=https://mirrors.tuna.tsinghua.edu.cn/archlinuxcn/x86_64
-# For base system packages
-repo_url_alarm_aarch64=http://mirror.archlinuxarm.org/aarch64/'$repo'
-# For kernels and other stuffs
-repo_url_7Ji_aarch64=https://github.com/7Ji/archrepo/releases/download/aarch64
-
-if [[ "${use_local_mirror}" ]]; then
-    repo_url_archlinuxcn_x86_64=http://repo.lan:9129/repo/archlinuxcn_x86_64/x86_64
-    repo_url_alarm_aarch64=http://repo.lan:9129/repo/archlinuxarm/aarch64/'$repo'
-    repo_url_7Ji_aarch64=http://repo.lan/github-mirror/aarch64
-fi
-
 # Everything will be done in a subfolder
-mkdir -p cross_nobuild/{bin,cache,out,rkloader}
+mkdir -p cross_nobuild/{bin,cache,out,src/{rkloader,pkg}}
 pushd cross_nobuild
 
-# Get rkloaders
+# functions
 dl() { # 1: url 2: output
+    echo "Downloading '$2' <= '$1'" >&2
     if [[ "$2" ]]; then
         curl -qgb "" -fL --retry 3 --retry-delay 3 -o "$2" "$1"
     else
         curl -qgb "" -fL --retry 3 --retry-delay 3 "$1"
     fi
+    echo "Downloaded '$2' <= '$1'"
 }
+
+init_repo() { # 1: dir, 2: url, 3: branch
+    if [[  -z "$1$2" ]]; then
+        echo "Dir and URL not set"
+        return 1
+    fi
+    rm -rf "$1"
+    mkdir "$1"
+    mkdir "$1"/{objects,refs}
+    echo 'ref: refs/heads/'"$3" > "$1"/HEAD
+cat > "$1"/config << _EOF_
+[core]
+	repositoryformatversion = 0
+	filemode = true
+	bare = true
+[remote "origin"]
+	url = $2
+	fetch = +refs/heads/$3:refs/heads/$3
+_EOF_
+}
+
+run_in_chroot() {
+   sudo chroot "${root}" "$@" 
+}
+
+cleanup() {
+    echo "=> Cleaning up before exiting..."
+    if [[ "${pid_pacoloco}" ]]; then
+        kill -s TERM ${pid_pacoloco} || true
+    fi
+    if [[ "${root}" ]]; then
+        run_in_chroot killall gpg-agent dirmngr || true
+        sudo umount -fR "${root}" || true
+    fi
+    if [[ "${lodev}" ]]; then
+        sudo losetup --detach "${lodev}" || true
+    fi
+}
+trap "cleanup" INT TERM EXIT
+
+# Get rkloaders
 if [[ "${freeze_rkloaders}" ]]; then
+    echo "=> Updating of RKloaders skipped"
     rkloaders=()
-    for i in rkloader/*; do
-        rkloaders+=("${i##*/}")
+    for rkloader in src/rkloader/*; do
+        rkloaders+=("${rkloader##*/}")
     done
 else
+    echo "=> Updating RKloaders"
     rkloader_parent=https://github.com/7Ji/orangepi5-rkloader/releases/download/nightly
     rkloaders=($(dl "${rkloader_parent}"/list))
     for rkloader in "${rkloaders[@]}"; do
-        if [[ ! -f rkloader/"${rkloader}" ]]; then
-            dl "${rkloader_parent}/${rkloader}" rkloader/"${rkloader}".temp
-            mv rkloader/"${rkloader}"{.temp,}
+        if [[ ! -f src/rkloader/"${rkloader}" ]]; then
+            dl "${rkloader_parent}/${rkloader}" src/rkloader/"${rkloader}".temp
+            mv src/rkloader/"${rkloader}"{.temp,}
         fi
     done
+    for rkloader in src/rkloader/*; do
+        rkloader_local="${rkloader##*/}"
+        latest=''
+        for rkloader_cmp in "${rkloaders[@]}"; do
+            if [[ "${rkloader_local}" == "${rkloader_cmp}" ]]; then
+                latest='yes'
+                break
+            fi
+        done
+        if [[ -z "${latest}" ]]; then
+            rm -f "${rkloader}"
+        fi
+    done
+    echo "=> Updated RKloaders"
 fi
+
+# Deploy pacoloco
+if [[ ! -d src/pacoloco.git ]]; then
+    rm -rf src/pacoloco.git
+    init_repo src/pacoloco.git https://github.com/anatol/pacoloco.git master
+fi
+if [[ ! -d src/pacoloco.git ]]; then
+    echo "Pacoloco repo not existing"
+    exit 1
+fi
+if [[ "${freeze_pacoloco}" ]]; then
+    echo "=> Updating of pacoloco git repo skipped"
+else
+    echo "=> Updating pacoloco git repo"
+    git --git-dir src/pacoloco.git remote update --prune
+    echo "=> Updated pacoloco git repo"
+fi
+pacoloco_ver=$(git --git-dir src/pacoloco.git rev-parse --short master)
+if [[ ! -f bin/pacoloco-${pacoloco_ver} ]]; then
+    echo "=> Building pacoloco-${pacoloco_ver}"
+    rm bin/pacoloco-* | true
+    rm -rf cache/pacoloco
+    mkdir cache/pacoloco
+    git --git-dir src/pacoloco.git --work-tree cache/pacoloco checkout -f master
+    pushd cache/pacoloco
+    go build -buildmode=pie -trimpath -ldflags=-linkmode=external -mod=readonly -modcacherw
+    popd
+    mv cache/pacoloco/pacoloco bin/pacoloco-"${pacoloco_ver}"
+fi
+chmod +x bin/pacoloco-"${pacoloco_ver}"
+ln -sf pacoloco-"${pacoloco_ver}" bin/pacoloco
+
+# Prepare to run pacoloco
+# prefer mirrors provided by companies than universities, save their budget
+cat > cache/pacoloco.conf << _EOF_
+cache_dir: src/pkg
+download_timeout: 3600
+purge_files_after: 2592000
+repos:
+  archlinuxarm:
+    urls:
+      - http://mirror.archlinuxarm.org
+      - http://mirrors.cloud.tencent.com.cn/archlinuxarm
+      - http://mirrors.tuna.tsinghua.edu.cn/archlinuxarm
+  archlinuxcn_x86_64:
+    urls:
+      - https://opentuna.cn/archlinuxcn
+      - https://mirrors.bfsu.edu.cn/archlinuxcn
+      - https://mirrors.pku.edu.cn/archlinuxcn
+      - https://mirrors.cloud.tencent.com/archlinuxcn
+      - https://mirrors.163.com/archlinux-cn
+      - https://mirrors.aliyun.com/archlinuxcn
+      - https://mirrors.tuna.tsinghua.edu.cn/archlinuxcn
+  7Ji:
+    url: https://github.com/7Ji/archrepo/releases/download
+_EOF_
+# Run pacoloco in background
+bin/pacoloco -config cache/pacoloco.conf &
+pid_pacoloco=$!
+sleep 1
+
+# Mainly for pacman-static
+repo_url_archlinuxcn_x86_64=http://127.0.0.1:9129/repo/archlinuxcn_x86_64/x86_64
+# For base system packages
+repo_url_alarm_aarch64=http://127.0.0.1:9129/repo/archlinuxarm/aarch64/'$repo'
+# For kernels and other stuffs
+repo_url_7Ji_aarch64=http://127.0.0.1:9129/repo/7Ji/aarch64
 
 # Deploy pacman-static
 dl "${repo_url_archlinuxcn_x86_64}/archlinuxcn.db" cache/archlinuxcn.db
@@ -60,32 +172,6 @@ if [[ ! -f bin/pacman-$ver ]]; then
 fi
 chmod +x bin/pacman-"${ver}"
 ln -sf pacman-"${ver}" bin/pacman
-alias pacman=bin/pacman
-
-# Create temporary pacman config
-pacman_mirrors="
-[core]
-Server = ${repo_url_alarm_aarch64}
-[extra]
-Server = ${repo_url_alarm_aarch64}
-[alarm]
-Server = ${repo_url_alarm_aarch64}
-[aur]
-Server = ${repo_url_alarm_aarch64}"
-
-cat > cache/pacman-loose.conf << _EOF_
-[options]
-Architecture = aarch64
-SigLevel = Optional TrustAll${pacman_mirrors}
-_EOF_
-
-cat > cache/pacman-strict.conf << _EOF_
-[options]
-Architecture = aarch64
-SigLevel = DatabaseOptional${pacman_mirrors}
-[7Ji]
-Server = ${repo_url_7Ji_aarch64}
-_EOF_
 
 # Basic image layout
 build_id=ArchLinuxARM-aarch64-OrangePi5-$(date +%Y%m%d_%H%M%S)
@@ -97,7 +183,7 @@ start=212992, size=3979264, type=B921B045-1DF0-41C3-AF44-4C6F280D3FAE'
 sfdisk out/${build_id}-base.img <<< "${table}"
 
 # Partition
-lodev=$(sudo losetup --find --partscan --show out/base.img)
+lodev=$(sudo losetup --find --partscan --show out/${build_id}-base.img)
 uuid_root=$(uuidgen)
 uuid_boot_mkfs=$(uuidgen)
 uuid_boot_mkfs=${uuid_boot_mkfs::8}
@@ -119,14 +205,42 @@ sudo mount shm "${root}"/dev/shm -t tmpfs -o mode=1777,nosuid,nodev
 sudo mount run "${root}"/run -t tmpfs -o nosuid,nodev,mode=0755
 sudo mount tmp "${root}"/tmp -t tmpfs -o mode=1777,strictatime,nodev,nosuid
 
+# Create temporary pacman config
+pacman_config="
+RootDir      = ${root}
+DBPath       = ${root}/var/lib/pacman/
+CacheDir     = ${root}/var/cache/pacman/pkg/
+LogFile      = ${root}/var/log/pacman.log
+GPGDir       = ${root}/etc/pacman.d/gnupg/
+HookDir      = ${root}/etc/pacman.d/hooks/
+Architecture = aarch64"
+pacman_mirrors="
+[core]
+Server = ${repo_url_alarm_aarch64}
+[extra]
+Server = ${repo_url_alarm_aarch64}
+[alarm]
+Server = ${repo_url_alarm_aarch64}
+[aur]
+Server = ${repo_url_alarm_aarch64}"
+
+cat > cache/pacman-loose.conf << _EOF_
+[options]${pacman_config}
+SigLevel = Optional TrustAll${pacman_mirrors}
+_EOF_
+
+cat > cache/pacman-strict.conf << _EOF_
+[options]${pacman_config}
+SigLevel = DatabaseOptional${pacman_mirrors}
+[7Ji]
+Server = ${repo_url_7Ji_aarch64}
+_EOF_
+
 # Base system
-sudo bin/pacman -Sy --config cache/pacman-loose.conf --root "${root}" --noconfirm base
+sudo bin/pacman -Sy --config cache/pacman-loose.conf --noconfirm base
 # Temporary network
 sudo mount --bind /etc/resolv.conf "${root}"/etc/resolv.conf
 # Keyring
-run_in_chroot() {
-   sudo chroot "${root}" "$@" 
-}
 run_in_chroot pacman-key --init
 run_in_chroot pacman-key --populate
 run_in_chroot pacman-key --recv-keys BA27F219383BB875
@@ -136,7 +250,7 @@ run_in_chroot killall gpg-agent dirmngr
 
 # Non-base packages
 kernel='linux-aarch64-orangepi5'
-sudo bin/pacman -Sy --config cache/pacman-strict.conf --root "${root}" --noconfirm \
+sudo bin/pacman -Sy --config cache/pacman-strict.conf --noconfirm \
     vim nano sudo openssh \
     7Ji/"${kernel}"{,-headers} \
     linux-firmware-orangepi \
@@ -203,7 +317,9 @@ sudo rm -f "${root}"/{,boot/}.zerofill
 ) > img/"${build_id}"-root.tar
 # Release resources
 sudo umount -R "${root}"
+root=
 sudo losetup --detach "${lodev}"
+lodev=
 suffixes=(
     'root.tar'
     'base.img'
