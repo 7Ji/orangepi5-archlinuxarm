@@ -386,7 +386,7 @@ for rkloader in "${rkloaders[@]}"; do
         fdt='rk3588-orangepi-5-plus.dtb'
     ;;
     esac
-    lodev=$(sudo losetup --find --offset 4M "${out}")
+    lodev=$(sudo losetup --find --offset 4M --show "${out}")
     boot=$(mktemp -d)
     sudo mount -o noatime "${lodev}" "${boot}"
     sudo sed -i 's|rk3588s-orangepi-5b.dtb|'"${fdt}"'|' "${boot}"/extlinux/extlinux.conf
