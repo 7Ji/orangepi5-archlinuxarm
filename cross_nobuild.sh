@@ -144,7 +144,7 @@ else
 fi
 
 # Deploy pacoloco
-dump_binary_from_repo https://geo.mirror.pkgbuild.com/extra/os/x86_64 extra pacoloco pacoloto usr/bin/pacoloco
+dump_binary_from_repo https://geo.mirror.pkgbuild.com/extra/os/x86_64 extra pacoloco pacoloco usr/bin/pacoloco
 
 # Prepare to run pacoloco
 # prefer mirrors provided by companies than universities, save their budget
