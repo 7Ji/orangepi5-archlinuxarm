@@ -343,6 +343,9 @@ sudo rm -f "${root}"/boot/initramfs-linux-aarch64-orangepi5.img
 sudo dd if=/dev/zero of="${root}"/.zerofill bs=16M || true
 sudo dd if=/dev/zero of="${root}"/boot/.zerofill bs=16M || true
 sudo rm -f "${root}"/{,boot/}.zerofill
+# Partially release resources
+sudo umount -R "${root}"/{proc,sys,dev,run,tmp}
+
 # Root archive
 (
     cd ${root}
