@@ -330,7 +330,7 @@ printf '[Match]\nName=eth* en*\n\n[Network]\nDHCP=yes\nDNSSEC=no\n' |
 run_in_chroot systemctl enable systemd-{network,resolve,timesync}d usb2host sshd
 
 # Users
-useradd -g wheel -m alarm
+run_in_chroot useradd -g wheel -m alarm
 run_in_chroot /bin/sh -c 'printf "%s\n" alarm_please_change_me alarm_please_change_me | passwd alarm'
 sudoers="${root}"/etc/sudoers
 sudo chmod o+w "${sudoers}"
