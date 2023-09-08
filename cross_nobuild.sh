@@ -21,7 +21,7 @@ dl() { # 1: url 2: output
     else
         curl -qgb "" -fL --retry 3 --retry-delay 3 "$1"
     fi
-    echo "Downloaded '$2' <= '$1'"
+    echo "Downloaded '$2' <= '$1'" >&2
 }
 
 init_repo() { # 1: dir, 2: url, 3: branch
