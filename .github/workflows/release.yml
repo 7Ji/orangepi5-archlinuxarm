@@ -1,4 +1,4 @@
-name: Release Build ArchLinuxARM for Orange Pi 5 with vendor kernel nightly
+name: Release ArchLinuxARM for Orange Pi 5 series with vendor kernel nightly
 on:
   workflow_dispatch:
   schedule:
@@ -18,20 +18,9 @@ jobs:
          name: artifact
      - name: Display structure of downloaded files
        run: ls -R
-     - name: Generate release note
-       run: |
-         cat *.md > note
-         cat >> note << _EOF_
-
-         [AUR linux-aarch64-orangepi5]: https://aur.archlinux.org/packages/linux-aarch64-orangepi5
-         [AUR linux-firmware-orangepi]: https://aur.archlinux.org/packages/linux-firmware-orangepi
-         [AUR usb2host]: http://aur.archlinux.org/packages/usb2host
-         [AUR yay]: http://aur.archlinux.org/packages/yay
-         _EOF_
      - name: Release
        uses: ncipollo/release-action@v1
        with:
-         bodyFile: note
          name: Nightly
          tag: nightly
          artifacts: ArchLinuxARM-aarch64-OrangePi5-*.gz
