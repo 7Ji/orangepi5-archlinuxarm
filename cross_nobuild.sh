@@ -362,14 +362,15 @@ suffixes=(
     'base.img'
 )
 
-for rkloader in rkloaders; do
+for rkloader in "${rkloaders[@]}"; do
     model=${rkloader##*pi-}
     model=${model%%-bl31*}
     # Use cp as it could reflink if the fs supports it
     cp out/"${build_id}"-{base,"${model}"}.img
-    out=out/"${build_id}-${model}".img
-    dd if=rkloader/"${rkloader}" of="${out}" conv=notrunc
-    suffixes+=("${model}".img)
+    suffix="${model}".img
+    suffixes+=("${suffix}")
+    out=out/"${build_id}-${suffix}"
+    dd if=src/rkloader/"${rkloader}" of="${out}" conv=notrunc
     sfdisk "${out}" <<< "${table}"
     case ${model} in
     5)
