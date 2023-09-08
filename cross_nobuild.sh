@@ -405,12 +405,15 @@ for rkloader in "${rkloaders[@]}"; do
     lodev=""
 done
 
+kill -s TERM ${pid_pacoloco} || true
+pid_pacoloco=
+pids_gzip=()
 rm -rf out/latest
 mkdir out/latest
-
 for suffix in "${suffixes[@]}"; do
     gzip -9 out/"${build_id}-${suffix}" &
+    pids_gzip+=($!)
     ln -s ../"${build_id}-${suffix}".gz out/latest/
 done
-wait
+wait ${pids_gzip[@]}
 popd
