@@ -413,5 +413,6 @@ for suffix in "${suffixes[@]}"; do
     pids_gzip+=($!)
     ln -s ../"${build_id}-${suffix}".gz out/latest/
 done
+echo "Waiting for gzip processes to end..."
 wait ${pids_gzip[@]}
 popd
