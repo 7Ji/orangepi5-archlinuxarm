@@ -7,7 +7,6 @@
 
 # The following envs could be set to change the behaviour:
 # freeze_rkloaders: when not empty, do not update rkloaders from https://github.com/7Ji/orangepi5-rkloader
-# freeze_pacoloco: when not empty, do not update pacoloco from https://github.com/anatol/pacoloco.git
 # pkg_from_local_mirror: when not empty, chainload pacoloco from another local mirror, useful for local only
 
 # Everything will be done in a subfolder
@@ -44,6 +43,45 @@ cat > "$1"/config << _EOF_
 	fetch = +refs/heads/$3:refs/heads/$3
 _EOF_
 }
+
+dump_binary_from_repo() { # 1: repo url, 2: repo name, 3: pkgname, 4: local bin, 5: source bin
+    dl "$1/$2" cache/repo.db
+    local desc=$(tar -xOf cache/repo.db --wildcards "$3"'-*/desc')
+    local names=($(sed -n '/%NAME%/{n;p;}' <<< "${desc}"))
+    case ${#names[@]} in
+    0)
+        echo "Failed to find package '$3' in repo '$1"
+        return 1
+    ;;
+    1)
+        local ver=$(sed -n '/%VERSION%/{n;p;}' <<< "${desc}")
+        local pkg=$(sed -n '/%FILENAME%/{n;p;}' <<< "${desc}")
+    ;;
+    *)
+        local vers=($(sed -n '/%VERSION%/{n;p;}' <<< "${desc}"))
+        local pkgs=($(sed -n '/%FILENAME%/{n;p;}' <<< "${desc}"))
+        local id=0
+        local name
+        for name in "${names[@]}"; do
+            if [[ "${name}" == "$3" ]]; then
+                break
+            fi
+            local id=$(( id + 1 ))
+        done
+        local ver="${vers[${id}]}"
+        local pkg="${pkgs[${id}]}"
+    ;;
+    esac
+    if [[ ! -f bin/"$4-${ver}" ]]; then
+        rm bin/"$4"-* || true
+        dl "$1/${pkg}" cache/"${pkg}"
+        tar -xOf cache/"${pkg}" "$5" > bin/"$4-${ver}".temp
+        mv bin/"$4-${ver}"{.temp,}
+    fi
+    chmod +x bin/"$4-${ver}"
+    ln -sf "$4-${ver}" bin/"$4"
+}
+
 
 run_in_chroot() {
    sudo chroot "${root}" "$@" 
@@ -106,35 +144,7 @@ else
 fi
 
 # Deploy pacoloco
-if [[ ! -d src/pacoloco.git ]]; then
-    rm -rf src/pacoloco.git
-    init_repo src/pacoloco.git https://github.com/anatol/pacoloco.git master
-fi
-if [[ ! -d src/pacoloco.git ]]; then
-    echo "Pacoloco repo not existing"
-    exit 1
-fi
-if [[ "${freeze_pacoloco}" ]]; then
-    echo "=> Updating of pacoloco git repo skipped"
-else
-    echo "=> Updating pacoloco git repo"
-    git --git-dir src/pacoloco.git remote update --prune
-    echo "=> Updated pacoloco git repo"
-fi
-pacoloco_ver=$(git --git-dir src/pacoloco.git rev-parse --short master)
-if [[ ! -f bin/pacoloco-${pacoloco_ver} ]]; then
-    echo "=> Building pacoloco-${pacoloco_ver}"
-    rm bin/pacoloco-* | true
-    rm -rf cache/pacoloco
-    mkdir cache/pacoloco
-    git --git-dir src/pacoloco.git --work-tree cache/pacoloco checkout -f master
-    pushd cache/pacoloco
-    go build -buildmode=pie -trimpath -ldflags=-linkmode=external -mod=readonly -modcacherw
-    popd
-    mv cache/pacoloco/pacoloco bin/pacoloco-"${pacoloco_ver}"
-fi
-chmod +x bin/pacoloco-"${pacoloco_ver}"
-ln -sf pacoloco-"${pacoloco_ver}" bin/pacoloco
+dump_binary_from_repo https://geo.mirror.pkgbuild.com/extra/os/x86_64 extra pacoloco /usr/bin/pacoloco pacoloto
 
 # Prepare to run pacoloco
 # prefer mirrors provided by companies than universities, save their budget
@@ -186,40 +196,7 @@ repo_url_alarm_aarch64=http://127.0.0.1:9129/repo/archlinuxarm/aarch64/'$repo'
 repo_url_7Ji_aarch64=http://127.0.0.1:9129/repo/7Ji/aarch64
 
 # Deploy pacman-static
-dl "${repo_url_archlinuxcn_x86_64}/archlinuxcn.db" cache/archlinuxcn.db
-desc=$(tar -xOf cache/archlinuxcn.db --wildcards 'pacman-static-*/desc')
-pacman_names=($(sed -n '/%NAME%/{n;p;}' <<< "${desc}"))
-case ${#pacman_names[@]} in
-0)
-    echo 'Failed to find pacman-static in archlinuxcn repo'
-    exit 1
-;;
-1)
-    pacman_ver=$(sed -n '/%VERSION%/{n;p;}' <<< "${desc}")
-    pacman_pkg=$(sed -n '/%FILENAME%/{n;p;}' <<< "${desc}")
-;;
-*)
-    pacman_vers=($(sed -n '/%VERSION%/{n;p;}' <<< "${desc}"))
-    pacman_pkgs=($(sed -n '/%FILENAME%/{n;p;}' <<< "${desc}"))
-    pacman_id=0
-    for pacman_name in "${pacman_names[@]}"; do
-        if [[ "${pacman_name}" == pacman-static ]]; then
-            break
-        fi
-        pacman_id=$(( pacman_id + 1 ))
-    done
-    pacman_ver="${pacman_vers[${pacman_id}]}"
-    pacman_pkg="${pacman_pkgs[${pacman_id}]}"
-;;
-esac
-if [[ ! -f bin/pacman-"${pacman_ver}" ]]; then
-    rm bin/pacman-* || true
-    dl "${repo_url_archlinuxcn_x86_64}/${pacman_pkg}" cache/"${pacman_pkg}"
-    tar -xOf cache/"${pacman_pkg}" usr/bin/pacman-static > bin/pacman-"${pacman_ver}".temp
-    mv bin/pacman-"${pacman_ver}"{.temp,}
-fi
-chmod +x bin/pacman-"${pacman_ver}"
-ln -sf pacman-"${pacman_ver}" bin/pacman
+dump_binary_from_repo "${repo_url_archlinuxcn_x86_64}" archlinuxcn pacman-static /usr/bin/pacman-static pacman
 
 # Basic image layout
 build_id=ArchLinuxARM-aarch64-OrangePi5-$(date +%Y%m%d_%H%M%S)
