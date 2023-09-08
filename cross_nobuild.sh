@@ -369,7 +369,7 @@ first-lba: 34
 start=64, size=960, type=0FC63DAF-8483-4772-8E79-3D69D8477DE4, uuid=4BA9EB52-1717-4DC3-9630-6DC203177AB6, name="idbloader"
 start=1024, size=6144, type=0FC63DAF-8483-4772-8E79-3D69D8477DE4, uuid=C59DC96C-516C-4453-9877-738A3D709C06, name="uboot"
 start=8192, size=204800, type=C12A7328-F81F-11D2-BA4B-00A0C93EC93B, name="alarmboot"
-start=212992, size=30902272, type=B921B045-1DF0-41C3-AF44-4C6F280D3FAE, name="alarmroot"'
+start=212992, size=3979264, type=B921B045-1DF0-41C3-AF44-4C6F280D3FAE, name="alarmroot"'
 
 for rkloader in "${rkloaders[@]}"; do
     model=${rkloader##*pi-}
