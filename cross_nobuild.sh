@@ -280,7 +280,7 @@ run_in_chroot pacman-key --lsign BA27F219383BB875
 kernel='linux-aarch64-orangepi5'
 sudo bin/pacman -Sy --config cache/pacman-strict.conf --noconfirm \
     vim nano sudo openssh \
-    7Ji/"${kernel}"{,-headers} \
+    7Ji/"${kernel}" \
     linux-firmware-orangepi \
     usb2host
 
@@ -362,8 +362,7 @@ suffixes=(
     'base.img'
 )
 
-table='
-label: gpt
+table='label: gpt
 label-id: 8B4AC2A0-F1D2-49DF-A6B6-0AF803764BBE
 first-lba: 34
 start=64, size=960, type=0FC63DAF-8483-4772-8E79-3D69D8477DE4, uuid=4BA9EB52-1717-4DC3-9630-6DC203177AB6, name="idbloader"
