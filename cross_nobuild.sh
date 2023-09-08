@@ -221,7 +221,7 @@ sudo mkfs.ext4 -L 'ALARMROOT' -m 0 -U "${uuid_root}" "${lodev}"p2
 root=$(mktemp -d)
 sudo mount -o noatime "${lodev}"p2 "${root}"
 sudo mkdir -p "${root}"/{boot,dev/{pts,shm},etc/pacman.d,proc,run,sys,tmp,var/{cache/pacman/pkg,lib/pacman,log}}
-sudo mount -o noatime "${lodev}"p2 "${root}"/boot
+sudo mount -o noatime "${lodev}"p1 "${root}"/boot
 sudo mount proc "${root}"/proc -t proc -o nosuid,noexec,nodev
 sudo mount sys "${root}"/sys -t sysfs -o nosuid,noexec,nodev,ro
 sudo mount udev "${root}"/dev -t devtmpfs -o mode=0755,nosuid
