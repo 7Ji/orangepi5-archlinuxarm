@@ -93,7 +93,7 @@ cleanup() {
         kill -s TERM ${pid_pacoloco} || true
     fi
     if [[ "${root}" ]]; then
-        run_in_chroot killall gpg-agent dirmngr || true
+        run_in_chroot killall -s KILL gpg-agent dirmngr || true
         if sudo umount -fR "${root}"; then
             rm -rf "${root}"
         fi
@@ -285,7 +285,7 @@ sudo bin/pacman -Sy --config cache/pacman-strict.conf --noconfirm \
     usb2host
 
 # Pacman-key expects to run in an actual system, it pulled up gpg-agent and it kept running
-run_in_chroot killall gpg-agent dirmngr
+run_in_chroot killall -s KILL gpg-agent dirmngr
 
 # /etc/fstab
 sudo tee -a "${root}"/etc/fstab << _EOF_
