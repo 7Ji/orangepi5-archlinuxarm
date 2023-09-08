@@ -314,7 +314,6 @@ _EOF_
 
 # Time
 sudo ln -sf "/usr/share/zoneinfo/UTC" "${root}"/etc/localtime
-run_in_chroot timedatectl set-ntp true
 
 # Locale
 sudo sed -i 's/^#\(en_US.UTF-8  \)$/\1/g' "${root}"/etc/locale.gen
@@ -328,7 +327,7 @@ printf '[Match]\nName=eth* en*\n\n[Network]\nDHCP=yes\nDNSSEC=no\n' |
     sudo tee "${root}"/etc/systemd/network/20-wired.network
 
 # Units
-run_in_chroot systemctl enable systemd-{network,resolve}d usb2host sshd
+run_in_chroot systemctl enable systemd-{network,resolve,timesync}d usb2host sshd
 
 # Users
 useradd -g wheel -m alarm
