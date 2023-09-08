@@ -37,7 +37,7 @@ jobs:
         uses: actions/cache/save@v3
         with:
           path: src.tar
-          key: ${{ runner.os }}-packages-${{ hashFiles('src.tar') }}
+          key: ${{ runner.os }}-src-${{ hashFiles('src.tar') }}
       - name: Upload a Build Artifact
         uses: actions/upload-artifact@v3.1.2
         with:
