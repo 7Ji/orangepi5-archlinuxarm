@@ -26,8 +26,10 @@ jobs:
           key: ${{ runner.os }}-src
           restore-keys: ${{ runner.os }}-src
       - name: Extract cached sources
-        if: steps.cache-restore-src.cache-hit == 'true'
-        run: tar -xf src.tar
+        run: |
+          if [[ -f src.tar ]]; then
+            tar -xf src.tar
+          fi
       - name: Cross build
         run: ./cross_nobuild.sh
       - name: Pack sources
