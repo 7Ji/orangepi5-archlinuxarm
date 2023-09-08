@@ -278,7 +278,7 @@ run_in_chroot pacman-key --lsign BA27F219383BB875
 
 # Non-base packages
 kernel='linux-aarch64-orangepi5'
-sudo bin/pacman -Sy --config cache/pacman-strict.conf --noconfirm \
+sudo bin/pacman -Syu --config cache/pacman-strict.conf --noconfirm \
     vim nano sudo openssh \
     7Ji/"${kernel}" \
     linux-firmware-orangepi \
