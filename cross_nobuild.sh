@@ -144,7 +144,7 @@ else
 fi
 
 # Deploy pacoloco
-dump_binary_from_repo https://geo.mirror.pkgbuild.com/extra/os/x86_64 extra pacoloco /usr/bin/pacoloco pacoloto
+dump_binary_from_repo https://geo.mirror.pkgbuild.com/extra/os/x86_64 extra pacoloco pacoloto usr/bin/pacoloco
 
 # Prepare to run pacoloco
 # prefer mirrors provided by companies than universities, save their budget
@@ -196,7 +196,7 @@ repo_url_alarm_aarch64=http://127.0.0.1:9129/repo/archlinuxarm/aarch64/'$repo'
 repo_url_7Ji_aarch64=http://127.0.0.1:9129/repo/7Ji/aarch64
 
 # Deploy pacman-static
-dump_binary_from_repo "${repo_url_archlinuxcn_x86_64}" archlinuxcn pacman-static /usr/bin/pacman-static pacman
+dump_binary_from_repo "${repo_url_archlinuxcn_x86_64}" archlinuxcn pacman-static pacman usr/bin/pacman-static 
 
 # Basic image layout
 build_id=ArchLinuxARM-aarch64-OrangePi5-$(date +%Y%m%d_%H%M%S)
