@@ -396,7 +396,7 @@ for rkloader in "${rkloaders[@]}"; do
     lodev=$(sudo losetup --find --offset 4M --show "${out}")
     boot=$(mktemp -d)
     sudo mount -o noatime "${lodev}" "${boot}"
-    sudo sed -i 's|rk3588s-orangepi-5b.dtb|'"${fdt}"'|' "${boot}"/extlinux/extlinux.conf
+    sudo sed -i 's|rk3588s-orangepi-5.dtb|'"${fdt}"'|' "${boot}"/extlinux/extlinux.conf
     sudo umount "${boot}"
     boot=""
     sudo losetup --detach "${lodev}"
