@@ -412,4 +412,5 @@ for suffix in "${suffixes[@]}"; do
     gzip -9 out/"${build_id}-${suffix}" &
     ln -s ../"${build_id}-${suffix}".gz out/latest/
 done
+wait
 popd
