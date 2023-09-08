@@ -34,6 +34,6 @@ jobs:
          bodyFile: note
          name: Nightly
          tag: nightly
-         artifacts: *.gz
+         artifacts: ArchLinuxARM-aarch64-OrangePi5-*.gz
          allowUpdates: true
          removeArtifacts: true
