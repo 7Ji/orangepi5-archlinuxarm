@@ -5,6 +5,11 @@
 # If you're running ALARM, then you should look at build.sh
 # If you're running Arch, then you should expect breakage due to Ubuntu FHS being expected
 
+# The following envs could be set to change the behaviour:
+# freeze_rkloaders: when not empty, do not update rkloaders from https://github.com/7Ji/orangepi5-rkloader
+# freeze_pacoloco: when not empty, do not update pacoloco from https://github.com/anatol/pacoloco.git
+# pkg_from_local_mirror: when not empty, chainload pacoloco from another local mirror, useful for local only
+
 # Everything will be done in a subfolder
 mkdir -p cross_nobuild/{bin,cache,out,src/{rkloader,pkg}}
 pushd cross_nobuild
@@ -51,12 +56,20 @@ cleanup() {
     fi
     if [[ "${root}" ]]; then
         run_in_chroot killall gpg-agent dirmngr || true
-        sudo umount -fR "${root}" || true
+        if sudo umount -fR "${root}"; then
+            rm -rf "${root}"
+        fi
+    fi
+    if [[ "${boot}" ]]; then
+      if sudo umount -f "${boot}"; then
+        rm -rf "${boot}"
+      fi
     fi
     if [[ "${lodev}" ]]; then
         sudo losetup --detach "${lodev}" || true
     fi
 }
+
 trap "cleanup" INT TERM EXIT
 
 # Get rkloaders
@@ -130,6 +143,18 @@ cache_dir: src/pkg
 download_timeout: 3600
 purge_files_after: 2592000
 repos:
+_EOF_
+if [[ "${pkg_from_local_mirror}" ]]; then
+cat >> cache/pacoloco.conf << _EOF_
+  archlinuxarm:
+    url: http://repo.lan:9129/repo/archlinuxarm
+  archlinuxcn_x86_64:
+    url: http://repo.lan:9129/repo/archlinuxcn_x86_64
+  7Ji:
+    url: http://repo.lan/github-mirror
+_EOF_
+else
+cat >> cache/pacoloco.conf << _EOF_
   archlinuxarm:
     urls:
       - http://mirror.archlinuxarm.org
@@ -147,6 +172,7 @@ repos:
   7Ji:
     url: https://github.com/7Ji/archrepo/releases/download
 _EOF_
+fi
 # Run pacoloco in background
 bin/pacoloco -config cache/pacoloco.conf &
 pid_pacoloco=$!
@@ -162,16 +188,38 @@ repo_url_7Ji_aarch64=http://127.0.0.1:9129/repo/7Ji/aarch64
 # Deploy pacman-static
 dl "${repo_url_archlinuxcn_x86_64}/archlinuxcn.db" cache/archlinuxcn.db
 desc=$(tar -xOf cache/archlinuxcn.db --wildcards 'pacman-static-*/desc')
-ver=$(sed -n '/%VERSION%/{n;p;}' <<< "${desc}")
-if [[ ! -f bin/pacman-$ver ]]; then
+pacman_names=($(sed -n '/%NAME%/{n;p;}' <<< "${desc}"))
+case ${#pacman_names[@]} in
+0)
+    echo 'Failed to find pacman-static in archlinuxcn repo'
+    exit 1
+;;
+1)
+    pacman_ver=$(sed -n '/%VERSION%/{n;p;}' <<< "${desc}")
+    pacman_pkg=$(sed -n '/%FILENAME%/{n;p;}' <<< "${desc}")
+;;
+*)
+    pacman_vers=($(sed -n '/%VERSION%/{n;p;}' <<< "${desc}"))
+    pacman_pkgs=($(sed -n '/%FILENAME%/{n;p;}' <<< "${desc}"))
+    pacman_id=0
+    for pacman_name in "${pacman_names[@]}"; do
+        if [[ "${pacman_name}" == pacman-static ]]; then
+            break
+        fi
+        pacman_id=$(( pacman_id + 1 ))
+    done
+    pacman_ver="${pacman_vers[${pacman_id}]}"
+    pacman_pkg="${pacman_pkgs[${pacman_id}]}"
+;;
+esac
+if [[ ! -f bin/pacman-"${pacman_ver}" ]]; then
     rm bin/pacman-* || true
-    pkg=$(sed -n '/%FILENAME%/{n;p;}' <<< "${desc}")
-    dl "${repo_url_archlinuxcn_x86_64}/${pkg}" cache/"${pkg}"
-    tar -xOf cache/"${pkg}" usr/bin/pacman-static > bin/pacman-"${ver}".temp
-    mv bin/pacman-"${ver}"{.temp,}
+    dl "${repo_url_archlinuxcn_x86_64}/${pacman_pkg}" cache/"${pacman_pkg}"
+    tar -xOf cache/"${pacman_pkg}" usr/bin/pacman-static > bin/pacman-"${pacman_ver}".temp
+    mv bin/pacman-"${pacman_ver}"{.temp,}
 fi
-chmod +x bin/pacman-"${ver}"
-ln -sf pacman-"${ver}" bin/pacman
+chmod +x bin/pacman-"${pacman_ver}"
+ln -sf pacman-"${pacman_ver}" bin/pacman
 
 # Basic image layout
 build_id=ArchLinuxARM-aarch64-OrangePi5-$(date +%Y%m%d_%H%M%S)
@@ -226,7 +274,7 @@ Server = ${repo_url_alarm_aarch64}"
 
 cat > cache/pacman-loose.conf << _EOF_
 [options]${pacman_config}
-SigLevel = Optional TrustAll${pacman_mirrors}
+SigLevel = Never${pacman_mirrors}
 _EOF_
 
 cat > cache/pacman-strict.conf << _EOF_
@@ -237,12 +285,12 @@ Server = ${repo_url_7Ji_aarch64}
 _EOF_
 
 # Base system
-sudo bin/pacman -Sy --config cache/pacman-loose.conf --noconfirm base
+sudo bin/pacman -Sy --config cache/pacman-loose.conf --noconfirm base archlinuxarm-keyring
 # Temporary network
 sudo mount --bind /etc/resolv.conf "${root}"/etc/resolv.conf
 # Keyring
 run_in_chroot pacman-key --init
-run_in_chroot pacman-key --populate
+run_in_chroot pacman-key --populate archlinuxarm
 run_in_chroot pacman-key --recv-keys BA27F219383BB875
 run_in_chroot pacman-key --lsign BA27F219383BB875
 # Pacman-key expects to run in an actual system, it pulled up gpg-agent and it kept running
@@ -257,8 +305,12 @@ sudo bin/pacman -Sy --config cache/pacman-strict.conf --noconfirm \
     usb2host
 
 # /etc/fstab
-printf '# root partition with ext4 on SDcard / USB drive\nUUID=%s\t/\text4\trw,noatime,data=writeback\t0 1\n# boot partition with vfat on SDcard / USB drive\nUUID=%s\t/boot\tvfat\trw,noatime,fmask=0022,dmask=0022,codepage=437,iocharset=ascii,shortname=mixed,utf8,errors=remount-ro\t0 2\n' \
-    "${uuid_root}" "${uuid_boot_specifier}" | sudo tee -a "${root}"/etc/fstab
+sudo tee -a "${root}"/etc/fstab << _EOF_
+# root partition with ext4 on SDcard / USB drive
+UUID=${uuid_root}	/	ext4	rw,noatime	0 1
+# boot partition with vfat on SDcard / USB drive
+UUID=${uuid_boot_specifier}	/boot	vfat	rw,noatime	0 2
+_EOF_
 
 # Time
 sudo ln -sf "/usr/share/zoneinfo/UTC" "${root}"/etc/localtime
@@ -314,7 +366,7 @@ sudo rm -f "${root}"/{,boot/}.zerofill
 (
     cd ${root}
     sudo bsdtar --acls --xattrs -cpf - *
-) > img/"${build_id}"-root.tar
+) > out/"${build_id}"-root.tar
 # Release resources
 sudo umount -R "${root}"
 root=
@@ -334,6 +386,28 @@ for rkloader in rkloaders; do
     dd if=rkloader/"${rkloader}" of="${out}" conv=notrunc
     suffixes+=("${model}".img)
     sfdisk "${out}" <<< "${table}"
+    case ${model} in
+    5)
+        continue
+    ;;
+    5_sata)
+        fdt='rk3588s-orangepi-5.dtb\nFDTOVERLAYS\t/dtbs/linux-aarch64-orangepi5/rockchip/overlay/rk3588-ssd-sata0.dtbo'
+    ;;
+    5b)
+        fdt='rk3588s-orangepi-5b.dtb'
+    ;;
+    5_plus)
+        fdt='rk3588-orangepi-5-plus.dtb'
+    ;;
+    esac
+    lodev=$(sudo losetup --find --offset 4M "${out}")
+    boot=$(mktemp -d)
+    sudo mount -o noatime "${lodev}" "${boot}"
+    sudo sed -i 's|rk3588s-orangepi-5b.dtb|'"${fdt}"'|' "${boot}"/extlinux/extlinux.conf
+    sudo umount "${boot}"
+    boot=""
+    sudo losetup --detach "${lodev}"
+    lodev=""
 done
 
 rm -rf out/latest
