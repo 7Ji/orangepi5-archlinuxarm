@@ -275,8 +275,6 @@ run_in_chroot pacman-key --init
 run_in_chroot pacman-key --populate archlinuxarm
 run_in_chroot pacman-key --recv-keys BA27F219383BB875
 run_in_chroot pacman-key --lsign BA27F219383BB875
-# Pacman-key expects to run in an actual system, it pulled up gpg-agent and it kept running
-run_in_chroot killall gpg-agent dirmngr
 
 # Non-base packages
 kernel='linux-aarch64-orangepi5'
@@ -285,6 +283,9 @@ sudo bin/pacman -Sy --config cache/pacman-strict.conf --noconfirm \
     7Ji/"${kernel}"{,-headers} \
     linux-firmware-orangepi \
     usb2host
+
+# Pacman-key expects to run in an actual system, it pulled up gpg-agent and it kept running
+run_in_chroot killall gpg-agent dirmngr
 
 # /etc/fstab
 sudo tee -a "${root}"/etc/fstab << _EOF_
