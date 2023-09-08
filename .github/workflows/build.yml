@@ -13,80 +13,36 @@ jobs:
         uses: actions/checkout@v3.5.2
         with:
           submodules: true
-      - name: Prepare packages
+      - name: Prepare deps
         run: |
           sudo apt update
           sudo apt install \
-            arch-install-scripts \
-            bc \
-            bison \
-            distcc \
             libarchive-tools \
-            libfl-dev \
-            libssl-dev \
-            libdebuginfod1 \
             qemu-user-static \
-            u-boot-tools
-      - name: Allow distcc for aarch64
-        run: |
-          for binary in c++ cc cpp g++ gcc; do
-            sudo ln -sf ../../bin/distcc /usr/lib/distcc/aarch64-unknown-linux-gnu-${binary}
-          done
-      - name: Restore cached ArchLinuxARM AArch64 build root
-        id: cache-restore-alarm-aarch64-root
+            systemd-container
+      - name: Restore cached sources
+        id: cache-restore-src
         uses: actions/cache/restore@v3
         with:
-          path: cross/aarch64.*
-          key: ${{ runner.os }}-alarm-aarch64-root
-          restore-keys: ${{ runner.os }}-alarm-aarch64-root
-      - name: Restore cached x86-64 Arch hosted AArch64 ArchLinuxARM toolchain
-        id: cache-restore-xtools-aarch64-on-x86_64
-        uses: actions/cache/restore@v3
-        with:
-          path: cross/xtools_aarch64_on_x86_64.*
-          key: ${{ runner.os }}-xtools-aarch64-on-x86_64
-          restore-keys: ${{ runner.os }}-xtools-aarch64-on-x86_64
-      - name: Restore cached pacakges
-        id: cache-restore-packages
-        uses: actions/cache/restore@v3
-        with:
-          path: pkg
-          key: ${{ runner.os }}-packages
-          restore-keys: ${{ runner.os }}-packages
+          path: src.tar
+          key: ${{ runner.os }}-src
+          restore-keys: ${{ runner.os }}-src
+      - name: Extract cached sources
+        if: steps.cache-restore-src.cache-hit == 'true'
+        run: tar -xf src.tar
       - name: Cross build
-        run: compressor=no ./cross.sh
-      - name: Compress archives and images
+        run: ./cross_nobuild.sh
+      - name: Pack sources
         run: |
-          for i in releases/*.{tar,img}; do
-            gzip -9 $i &
-          done
-          wait
-      - name: Pack AArch64 rootfs for caching
-        run: |
-          sudo bsdtar --strip-components=2 --acls --xattrs -czf cross/aarch64.tar.gz cross/aarch64
-      - name: Save ArchLinuxARM AArch64 build root
-        id: cache-save-alarm-aarch64-root
+          tar -cf src.tar cross_nobuild/src
+      - name: Save sources
         uses: actions/cache/save@v3
         with:
-          path: cross/aarch64.*
-          key: ${{ runner.os }}-alarm-aarch64-root-${{ hashFiles('cross/aarch64.*') }}
-      - name: Save x86-64 Arch hosted AArch64 ArchLinuxARM toolchain
-        id: cache-save-xtools-aarch64-on-x86_64
-        uses: actions/cache/save@v3
-        with:
-          path: cross/xtools_aarch64_on_x86_64.*
-          key: ${{ runner.os }}-xtools-aarch64-on-x86_64-${{ hashFiles('cross/xtools_aarch64_on_x86_64.*') }}
-      - name: Save pacakges
-        id: cache-save-packages
-        uses: actions/cache/save@v3
-        with:
-          path: pkg
-          key: ${{ runner.os }}-packages-${{ hashFiles('pkg') }}
+          path: src.tar
+          key: ${{ runner.os }}-packages-${{ hashFiles('src.tar') }}
       - name: Upload a Build Artifact
         uses: actions/upload-artifact@v3.1.2
         with:
-          path: releases/ArchLinuxARM-aarch64-OrangePi5-*
+          path: cross_nobuild/out/latest/*
           if-no-files-found: error
-      - name: Report build versions
-        run: cat releases/ArchLinuxARM-aarch64-OrangePi5-*.md
       
