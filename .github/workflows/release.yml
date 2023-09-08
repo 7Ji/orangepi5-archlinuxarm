@@ -29,9 +29,11 @@ jobs:
          [AUR yay]: http://aur.archlinux.org/packages/yay
          _EOF_
      - name: Release
-       uses: softprops/action-gh-release@v1
+       uses: ncipollo/release-action@v1
        with:
-         body_path: note
+         bodyFile: note
          name: Nightly
-         tag_name: nightly
-         files: ArchLinuxARM-aarch64-OrangePi5-*.gz
+         tag: nightly
+         artifacts: ArchLinuxARM-aarch64-OrangePi5-*.gz
+         allowUpdates: true
+         removeArtifacts: true
