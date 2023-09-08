@@ -263,6 +263,11 @@ _EOF_
 
 # Base system
 sudo bin/pacman -Sy --config cache/pacman-loose.conf --noconfirm base archlinuxarm-keyring
+# Add my repo
+sudo tee -a "${root}"/etc/pacman.conf << _EOF_
+[7Ji]
+Server = https://github.com/7Ji/archrepo/releases/download/$arch
+_EOF_
 # Temporary network
 sudo mount --bind /etc/resolv.conf "${root}"/etc/resolv.conf
 # Keyring
