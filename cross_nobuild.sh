@@ -45,7 +45,7 @@ _EOF_
 }
 
 dump_binary_from_repo() { # 1: repo url, 2: repo name, 3: pkgname, 4: local bin, 5: source bin
-    dl "$1/$2" cache/repo.db
+    dl "$1/$2".db cache/repo.db
     local desc=$(tar -xOf cache/repo.db --wildcards "$3"'-*/desc')
     local names=($(sed -n '/%NAME%/{n;p;}' <<< "${desc}"))
     case ${#names[@]} in
