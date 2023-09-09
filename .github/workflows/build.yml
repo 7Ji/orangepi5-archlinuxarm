@@ -25,21 +25,36 @@ jobs:
           path: src.tar
           key: ${{ runner.os }}-src
           restore-keys: ${{ runner.os }}-src
+      - name: Restore cached binaries
+        id: cache-restore-bin
+        uses: actions/cache/restore@v3
+        with:
+          path: bin.tar
+          key: ${{ runner.os }}-bin
+          restore-keys: ${{ runner.os }}-bin
       - name: Extract cached sources
         run: |
-          if [[ -f src.tar ]]; then
-            tar -xf src.tar
-          fi
+          for i in bin src; do
+            if [[ -f $i.tar ]]; then
+              tar -xf $i.tar
+            fi
+          done
       - name: Cross build
         run: ./cross_nobuild.sh
       - name: Pack sources
         run: |
           tar -cf src.tar cross_nobuild/src
+          tar -cf bin.tar cross_nobuild/bin
       - name: Save sources
         uses: actions/cache/save@v3
         with:
           path: src.tar
           key: ${{ runner.os }}-src-${{ hashFiles('src.tar') }}
+      - name: Save binaries
+        uses: actions/cache/save@v3
+        with:
+          path: bin.tar
+          key: ${{ runner.os }}-src-${{ hashFiles('bin.tar') }}
       - name: Upload a Build Artifact
         uses: actions/upload-artifact@v3.1.2
         with:
