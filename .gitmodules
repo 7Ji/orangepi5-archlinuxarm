@@ -1,15 +1,15 @@
 [submodule "common"]
-	path = common
+	path = native_build/common
 	url = https://github.com/7Ji/alarm-builder-common.git
 [submodule "aur/linux-aarch64-orangepi5"]
-	path = build/linux-aarch64-orangepi5
+	path = native_build/build/linux-aarch64-orangepi5
 	url = https://aur.archlinux.org/linux-aarch64-orangepi5.git
 [submodule "aur/yay"]
-	path = build/yay
+	path = native_build/build/yay
 	url = https://aur.archlinux.org/yay.git
 [submodule "build/linux-firmware-orangepi"]
-	path = build/linux-firmware-orangepi
+	path = native_build/build/linux-firmware-orangepi
 	url = https://aur.archlinux.org/linux-firmware-orangepi.git
 [submodule "build/usb2host"]
-	path = build/usb2host
+	path = native_build/build/usb2host
 	url = https://github.com/7Ji-PKGBUILDs/usb2host.git
