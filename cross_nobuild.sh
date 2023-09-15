@@ -144,7 +144,7 @@ else
 fi
 
 # Deploy pacoloco
-dump_binary_from_repo https://opentuna.cn/archlinux/extra/os/x86_64 extra pacoloco pacoloco usr/bin/pacoloco
+dump_binary_from_repo https://geo.mirror.pkgbuild.com/extra/os/x86_64 extra pacoloco pacoloco usr/bin/pacoloco
 
 # Prepare to run pacoloco
 # prefer mirrors provided by companies than universities, save their budget
@@ -168,17 +168,14 @@ cat >> cache/pacoloco.conf << _EOF_
   archlinuxarm:
     urls:
       - http://mirror.archlinuxarm.org
+      - https://opentuna.cn/archlinuxarm
       - http://mirrors.cloud.tencent.com.cn/archlinuxarm
-      - http://mirrors.tuna.tsinghua.edu.cn/archlinuxarm
   archlinuxcn_x86_64:
     urls:
       - https://opentuna.cn/archlinuxcn
-      - https://mirrors.bfsu.edu.cn/archlinuxcn
-      - https://mirrors.pku.edu.cn/archlinuxcn
       - https://mirrors.cloud.tencent.com/archlinuxcn
       - https://mirrors.163.com/archlinux-cn
       - https://mirrors.aliyun.com/archlinuxcn
-      - https://mirrors.tuna.tsinghua.edu.cn/archlinuxcn
   7Ji:
     url: https://github.com/7Ji/archrepo/releases/download
 _EOF_
