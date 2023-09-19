@@ -24,26 +24,6 @@ dl() { # 1: url 2: output
     echo "Downloaded '$2' <= '$1'" >&2
 }
 
-init_repo() { # 1: dir, 2: url, 3: branch
-    if [[  -z "$1$2" ]]; then
-        echo "Dir and URL not set"
-        return 1
-    fi
-    rm -rf "$1"
-    mkdir "$1"
-    mkdir "$1"/{objects,refs}
-    echo 'ref: refs/heads/'"$3" > "$1"/HEAD
-cat > "$1"/config << _EOF_
-[core]
-	repositoryformatversion = 0
-	filemode = true
-	bare = true
-[remote "origin"]
-	url = $2
-	fetch = +refs/heads/$3:refs/heads/$3
-_EOF_
-}
-
 dump_binary_from_repo() { # 1: repo url, 2: repo name, 3: pkgname, 4: local bin, 5: source bin
     dl "$1/$2".db cache/repo.db
     local desc=$(tar -xOf cache/repo.db --wildcards "$3"'-*/desc')
