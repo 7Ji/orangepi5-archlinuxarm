@@ -7,7 +7,7 @@
 
 # The following envs could be set to change the behaviour:
 # freeze_rkloaders: when not empty, do not update rkloaders from https://github.com/7Ji/orangepi5-rkloader
-# pkg_from_local_mirror: when not empty, chainload pacoloco from another local mirror, useful for local only
+# pkg_from_local_mirror: when not empty, download pkgs from another local mirror (e.g. pacoloco), useful for local only
 
 if [[ "${pkg_from_local_mirror}" ]]; then
     mirror_archlinux=${mirror_archlinux:-http://repo.lan:9129/repo/archlinux}
@@ -81,9 +81,6 @@ run_in_chroot() {
 
 cleanup() {
     echo "=> Cleaning up before exiting..."
-    if [[ "${pid_pacoloco}" ]]; then
-        kill -s TERM ${pid_pacoloco} || true
-    fi
     if [[ "${root}" ]]; then
         run_in_chroot killall -s KILL gpg-agent dirmngr || true
         if sudo umount -fR "${root}"; then
@@ -135,39 +132,12 @@ else
     echo "=> Updated RKloaders"
 fi
 
-# Deploy pacoloco
-dump_binary_from_repo "${mirror_archlinux}"/extra/os/x86_64 extra pacoloco pacoloco usr/bin/pacoloco
-
-# Prepare to run pacoloco
-# prefer mirrors provided by companies than universities, save their budget
-echo "cache_dir: src/pkg
-download_timeout: 3600
-purge_files_after: 2592000
-repos:
-  archlinuxarm:
-    urls:
-      - ${mirror_archlinuxarm}
-      - https://opentuna.cn/archlinuxarm
-      - http://mirrors.cloud.tencent.com.cn/archlinuxarm
-  archlinuxcn_x86_64:
-    urls:
-      - ${mirror_archlinuxcn}
-      - https://mirrors.cloud.tencent.com/archlinuxcn
-      - https://mirrors.163.com/archlinux-cn
-      - https://mirrors.aliyun.com/archlinuxcn
-  7Ji:
-    url: ${mirror_7Ji}" > cache/pacoloco.conf
-# Run pacoloco in background
-bin/pacoloco -config cache/pacoloco.conf &
-pid_pacoloco=$!
-sleep 1
-
 # Mainly for pacman-static
-repo_url_archlinuxcn_x86_64=http://127.0.0.1:9129/repo/archlinuxcn_x86_64/x86_64
+repo_url_archlinuxcn_x86_64="${mirror_archlinuxcn}"/x86_64
 # For base system packages
-repo_url_alarm_aarch64=http://127.0.0.1:9129/repo/archlinuxarm/aarch64/'$repo'
+repo_url_alarm_aarch64="${mirror_archlinuxarm}"/aarch64/'$repo'
 # For kernels and other stuffs
-repo_url_7Ji_aarch64=http://127.0.0.1:9129/repo/7Ji/aarch64
+repo_url_7Ji_aarch64="${mirror_7Ji}"/aarch64
 
 # Deploy pacman-static
 dump_binary_from_repo "${repo_url_archlinuxcn_x86_64}" archlinuxcn pacman-static pacman usr/bin/pacman-static 
@@ -208,7 +178,7 @@ sudo mount tmp "${root}"/tmp -t tmpfs -o mode=1777,strictatime,nodev,nosuid
 pacman_config="
 RootDir      = ${root}
 DBPath       = ${root}/var/lib/pacman/
-CacheDir     = ${root}/var/cache/pacman/pkg/
+CacheDir     = src/pkg/
 LogFile      = ${root}/var/log/pacman.log
 GPGDir       = ${root}/etc/pacman.d/gnupg/
 HookDir      = ${root}/etc/pacman.d/hooks/
@@ -252,6 +222,9 @@ sudo bin/pacman -Syu --config cache/pacman-strict.conf --noconfirm \
     7Ji/"${kernel}" \
     linux-firmware-orangepi \
     usb2host
+
+# Clean up unused packages
+sudo bin/pacman -Sc --config cache/pacman-strict.conf --noconfirm
 
 # Pacman-key expects to run in an actual system, it pulled up gpg-agent and it kept running
 run_in_chroot killall -s KILL gpg-agent dirmngr
@@ -371,8 +344,6 @@ for rkloader in "${rkloaders[@]}"; do
     lodev=""
 done
 
-kill -s TERM ${pid_pacoloco} || true
-pid_pacoloco=
 pids_gzip=()
 rm -rf out/latest
 mkdir out/latest
