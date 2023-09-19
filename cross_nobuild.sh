@@ -9,6 +9,18 @@
 # freeze_rkloaders: when not empty, do not update rkloaders from https://github.com/7Ji/orangepi5-rkloader
 # pkg_from_local_mirror: when not empty, chainload pacoloco from another local mirror, useful for local only
 
+if [[ "${pkg_from_local_mirror}" ]]; then
+    mirror_archlinux=${mirror_archlinux:-http://repo.lan:9129/repo/archlinux}
+    mirror_archlinuxarm=${mirror_alarm:-http://repo.lan:9129/repo/archlinuxarm}
+    mirror_archlinuxcn=${mirror_archlinuxcn:-http://repo.lan:9129/repo/archlinuxcn_x86_64}
+    mirror_7Ji=${mirror_7Ji:-http://repo.lan/github-mirror}
+else
+    mirror_archlinux=${mirror_archlinux:-https://geo.mirror.pkgbuild.com}
+    mirror_archlinuxarm=${mirror_alarm:-http://mirror.archlinuxarm.org}
+    mirror_archlinuxcn=${mirror_archlinuxcn:-https://opentuna.cn/archlinuxcn}
+    mirror_7Ji=${mirror_7Ji:-https://github.com/7Ji/archrepo/releases/download}
+fi
+
 # Everything will be done in a subfolder
 mkdir -p cross_nobuild/{bin,cache,out,src/{rkloader,pkg}}
 pushd cross_nobuild
@@ -124,42 +136,27 @@ else
 fi
 
 # Deploy pacoloco
-dump_binary_from_repo https://geo.mirror.pkgbuild.com/extra/os/x86_64 extra pacoloco pacoloco usr/bin/pacoloco
+dump_binary_from_repo "${mirror_archlinux}"/extra/os/x86_64 extra pacoloco pacoloco usr/bin/pacoloco
 
 # Prepare to run pacoloco
 # prefer mirrors provided by companies than universities, save their budget
-cat > cache/pacoloco.conf << _EOF_
-cache_dir: src/pkg
+echo "cache_dir: src/pkg
 download_timeout: 3600
 purge_files_after: 2592000
 repos:
-_EOF_
-if [[ "${pkg_from_local_mirror}" ]]; then
-cat >> cache/pacoloco.conf << _EOF_
-  archlinuxarm:
-    url: http://repo.lan:9129/repo/archlinuxarm
-  archlinuxcn_x86_64:
-    url: http://repo.lan:9129/repo/archlinuxcn_x86_64
-  7Ji:
-    url: http://repo.lan/github-mirror
-_EOF_
-else
-cat >> cache/pacoloco.conf << _EOF_
   archlinuxarm:
     urls:
-      - http://mirror.archlinuxarm.org
+      - ${mirror_archlinuxarm}
       - https://opentuna.cn/archlinuxarm
       - http://mirrors.cloud.tencent.com.cn/archlinuxarm
   archlinuxcn_x86_64:
     urls:
-      - https://opentuna.cn/archlinuxcn
+      - ${mirror_archlinuxcn}
       - https://mirrors.cloud.tencent.com/archlinuxcn
       - https://mirrors.163.com/archlinux-cn
       - https://mirrors.aliyun.com/archlinuxcn
   7Ji:
-    url: https://github.com/7Ji/archrepo/releases/download
-_EOF_
-fi
+    url: ${mirror_7Ji}" > cache/pacoloco.conf
 # Run pacoloco in background
 bin/pacoloco -config cache/pacoloco.conf &
 pid_pacoloco=$!
@@ -179,13 +176,13 @@ dump_binary_from_repo "${repo_url_archlinuxcn_x86_64}" archlinuxcn pacman-static
 build_id=ArchLinuxARM-aarch64-OrangePi5-$(date +%Y%m%d_%H%M%S)
 rm -f out/"${build_id}"-base.img
 truncate -s 2G out/"${build_id}"-base.img
-table='label: gpt
+echo 'label: gpt
 start=8192, size=204800, type=C12A7328-F81F-11D2-BA4B-00A0C93EC93B
-start=212992, size=3979264, type=B921B045-1DF0-41C3-AF44-4C6F280D3FAE'
-sfdisk out/${build_id}-base.img <<< "${table}"
+start=212992, size=3979264, type=B921B045-1DF0-41C3-AF44-4C6F280D3FAE' |
+    sfdisk out/"${build_id}"-base.img
 
 # Partition
-lodev=$(sudo losetup --find --partscan --show out/${build_id}-base.img)
+lodev=$(sudo losetup --find --partscan --show out/"${build_id}"-base.img)
 uuid_root=$(uuidgen)
 uuid_boot_mkfs=$(uuidgen)
 uuid_boot_mkfs=${uuid_boot_mkfs::8}
@@ -226,25 +223,20 @@ Server = ${repo_url_alarm_aarch64}
 [aur]
 Server = ${repo_url_alarm_aarch64}"
 
-cat > cache/pacman-loose.conf << _EOF_
-[options]${pacman_config}
-SigLevel = Never${pacman_mirrors}
-_EOF_
+echo "[options]${pacman_config}
+SigLevel = Never${pacman_mirrors}" > cache/pacman-loose.conf
 
-cat > cache/pacman-strict.conf << _EOF_
-[options]${pacman_config}
+echo "[options]${pacman_config}
 SigLevel = DatabaseOptional${pacman_mirrors}
 [7Ji]
-Server = ${repo_url_7Ji_aarch64}
-_EOF_
+Server = ${repo_url_7Ji_aarch64}" > cache/pacman-strict.conf
 
 # Base system
 sudo bin/pacman -Sy --config cache/pacman-loose.conf --noconfirm base archlinuxarm-keyring
 # Add my repo
-sudo tee -a "${root}"/etc/pacman.conf << _EOF_
-[7Ji]
-Server = https://github.com/7Ji/archrepo/releases/download/\$arch
-_EOF_
+echo '[7Ji]
+Server = https://github.com/7Ji/archrepo/releases/download/$arch' | 
+    sudo tee -a "${root}"/etc/pacman.conf
 # Temporary network
 sudo mount --bind /etc/resolv.conf "${root}"/etc/resolv.conf
 # Keyring
@@ -265,12 +257,11 @@ sudo bin/pacman -Syu --config cache/pacman-strict.conf --noconfirm \
 run_in_chroot killall -s KILL gpg-agent dirmngr
 
 # /etc/fstab
-sudo tee -a "${root}"/etc/fstab << _EOF_
-# root partition with ext4 on SDcard / USB drive
+echo "# root partition with ext4 on SDcard / USB drive
 UUID=${uuid_root}	/	ext4	rw,noatime	0 1
 # boot partition with vfat on SDcard / USB drive
-UUID=${uuid_boot_specifier}	/boot	vfat	rw,noatime	0 2
-_EOF_
+UUID=${uuid_boot_specifier}	/boot	vfat	rw,noatime	0 2" |
+    sudo tee -a "${root}"/etc/fstab
 
 # Time
 sudo ln -sf "/usr/share/zoneinfo/UTC" "${root}"/etc/localtime
