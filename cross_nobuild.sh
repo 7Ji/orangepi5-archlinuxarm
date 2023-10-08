@@ -97,6 +97,13 @@ cleanup() {
     fi
 }
 
+pacman_could_retry() {
+    if ! sudo bin/pacman "$@"; then
+        echo "Warning: pacman command failed to execute correctly, retry once"
+        sudo bin/pacman "$@"
+    fi
+}
+
 trap "cleanup" INT TERM EXIT
 
 # Get rkloaders
@@ -202,7 +209,7 @@ SigLevel = DatabaseOptional${pacman_mirrors}
 Server = ${repo_url_7Ji_aarch64}" > cache/pacman-strict.conf
 
 # Base system
-sudo bin/pacman -Sy --config cache/pacman-loose.conf --noconfirm base archlinuxarm-keyring
+pacman_could_retry -Sy --config cache/pacman-loose.conf --noconfirm base archlinuxarm-keyring
 # Add my repo
 echo '[7Ji]
 Server = https://github.com/7Ji/archrepo/releases/download/$arch' | 
@@ -217,7 +224,7 @@ run_in_chroot pacman-key --lsign BA27F219383BB875
 
 # Non-base packages
 kernel='linux-aarch64-orangepi5'
-sudo bin/pacman -Syu --config cache/pacman-strict.conf --noconfirm \
+pacman_could_retry -Syu --config cache/pacman-strict.conf --noconfirm \
     vim nano sudo openssh \
     7Ji/"${kernel}" \
     linux-firmware-orangepi \
