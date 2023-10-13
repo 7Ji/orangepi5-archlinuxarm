@@ -189,6 +189,31 @@ Address=[Your static IP with mask, e.g. 192.168.123.234/24]
 Gateway=[Your gateway, e.g. 192.168.123.1]
 DNS=[Your DNS, e.g. 192.168.123.1, or 8.8.8.8]
 ```
+
+### WLAN
+There's nothing pre-installed or pre-configured about the Wireless LAN, but the wireless drivers are built-in. To get WLAN working, you'll need to choose and install a wireless utility, following [the doc on arch wiki](https://wiki.archlinux.org/title/Network_configuration/Wireless), skipping the driver part. My recommendation would be [wpa_supplicant](https://wiki.archlinux.org/title/Wpa_supplicant) and the following part assumes you choose that.
+
+Note that, the **network manager** and the **wireless utility** are two distinct parts, the latter is only responsible to assosiate your wireless card to the access point (OSI model layer 2), it doesn't even set your IP (OSI model layer 3).
+
+The image already comes with `systemd-networkd` as the network manager. What it lacks is only a wireless utility to help you associate your wireless card with your access point.
+
+#### With systemd-networkd
+Assuming you've followed the `wpa_supplicant` doc on Wiki and already succeeded on connection to your AP at least once using `wpa_cli`, then enabling the `wpa_supplicant@[Interface Name].service` and adding another `systemd-networkd` network profile for your network interface would be enough.
+
+#### Without systemd-networkd
+If you feel the file-based configuration is too complicated for our `systemd-networkd` + `wpa_supplicant` combo, you can switch to another network manager providing both the network and wireless management, e.g. NetworkManager.
+
+To do so, you need to disable `systemd-networkd` after the your new manager is installed:
+```
+systemctl disable --now systemd-{network,resolve}d.service
+```
+**Warning: after running the above command, your board would lose the network connection, so you better do have another network manager already installed and operate directly on the board**
+
+As systemd-networkd is a part of the systemd package, provided by the base package group, you don't need to and can't uninstall it from your system. You can however delete all its config files, if you don't want to go back to it:
+```
+sudo rm -rf /etc/systemd/network
+```
+
 ### SSH
 `sshd.service` is enabled by default, you could turn that off:
 ```
