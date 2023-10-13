@@ -1,5 +1,7 @@
 # Prebuilt ArchLinux ARM images for Orange Pi 5 / 5B / 5 plus
 
+**This project is neither affiliated with ArchLinuxARM nor OrangePi, it's my personal project and I purchased all the needed hardware by myself.**
+
 _This is the doc for the new images using purely Github Actions to deploy nightly, for the old doc for the old images, read [the old doc](README-old.md)_
 
 ## Installation
