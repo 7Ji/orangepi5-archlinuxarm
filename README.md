@@ -223,7 +223,7 @@ systemctl disable sshd.service
 ## Advanced configuration
 
 ### Custom repo
-By default, there's an additional [7Ji repo](https://github.com/7Ji/archrepo) added to pacman.conf, which is maintained by myself, serving my pre-built AUR images including kernel packages and Rockchip MPP packages, if you don't want to use it, you can remove the repo by modifying `/etc/pacman.conf`:
+By default, there's an additional [7Ji repo](https://github.com/7Ji/archrepo) added to pacman.conf, which is maintained by myself, serving my pre-built packages including kernel and Rockchip MPP related ones, if you don't want to use it, you can remove the repo by modifying `/etc/pacman.conf`:
 ```
 vi /etc/pacman.conf
 ```
@@ -236,7 +236,9 @@ And delete my signing key:
 ```
 pacman-key --delete 8815547B7B80370675B3CD20BA27F219383BB875
 ```
-As a alternative, the archlinuxcn repo also hosts pre-built kernel images based on my AUR package, and [a list of all packages](https://github.com/7Ji/archrepo/blob/master/aarch64.yaml) on my repo is available so you can build them by yourself. Most of them are available from AUR so you can use AUR helpers like `yay` to keep them up-to-date by building by yourself.
+As a alternative, the archlinuxcn repo also hosts pre-built kernels based on my packages, and [a list of all packages](https://github.com/7Ji/archrepo/blob/master/aarch64.yaml) on my repo is available so you can build them by yourself.
+
+_Some of the arch-independent ones are available from AUR so you can use AUR helpers like `yay` to keep them up-to-date by building by yourself (arch-specific ones like kernels, drivers, MPP-related, etc were previous available on AUR but they're either removed or will be removed soon as AUR is purging non pure-x86_64-arch packages)._
 
 The main benefit of the repo is that you can use simply `pacman -Syu` to keep the kernels up-to-date, and install some packages conveniently which are needed for the following steps.
 
@@ -252,8 +254,6 @@ You can install panfork mesa and the firmware to enable GPU accelration:
 ```
 sudo pacman -Syu mesa-panfork-git mali-valhall-g610-firmware
 ```
-_`mesa-panfork-git` would replace `mesa` you've installed in the last step, when `pacman` asks you whether to replace it, agree it_  
-_Also available on AUR: https://aur.archlinux.org/packages/mesa-panfork-git https://aur.archlinux.org/pkgbase/libmali-valhall-g610_
 
 A reboot is neccessary if you've started any GPU work (e.g. entering your DE) during this boot.
 
@@ -267,7 +267,6 @@ Alongside the mainline, open-source panfork MESA, another choice to utilize your
 ```
 sudo pacman -Syu libmali-valhall-g610-{dummy,gbm,wayland-gbm,x11-gbm,x11-wayland-gbm}
 ```
-_Also available on AUR: https://aur.archlinux.org/pkgbase/libmali-valhall-g610_
 
 As these drivers do not provide `OpenGL` but only `OpenGLES`, no mainstream DE would work with them, so I didn't set them as global library. You would need to manually specify the driver you want to use when running some program that runs with `OpenGLES`:
 ```
@@ -282,7 +281,6 @@ If you want to run OpenGL program with the blob GPU drivers, it won't work as th
 ```
 sudo pacman -Syu gl4es-git
 ```
-_Also available on AUR: https://aur.archlinux.org/packages/gl4es-git_
 
 To run a program with the translation layer on top of the blob drivers:
 ```
@@ -309,13 +307,11 @@ A rockchip mpp (multi-media processing platform) enabled ffmpeg pacakge is also 
 ```
 sudo pacman -Syu ffmpeg-mpp
 ```
-_Also available on AUR: https://aur.archlinux.org/packages/ffmpeg-mpp_
 
 Addtionally, install ffmpeg4.4-mpp, if you want to use `VLC` (basically the only video player that still uses `ffmpeg4.4` in Arch repo):
    ```
    sudo pacman -Syu ffmpeg4.4-mpp
    ```
-   _Also available on AUR: https://aur.archlinux.org/packages/ffmpeg4.4-mpp_
 
 ### Hardware video decoding web browser
 
@@ -323,8 +319,7 @@ A rockchip mpp enabled Chromium package is also available from https://github.co
 ```
 sudo pacman -Syu chromium-mpp
 ```
-_Also available on AUR: https://aur.archlinux.org/packages/chromium-mpp_
 
-The package needs extra setup before running, which is documented [here](https://aur.archlinux.org/packages/chromium-mpp#comment-930317)
+The package needs extra setup before running, which is documented [here](https://github.com/7Ji-PKGBUILDs/chromium-mpp)
 
 _This Chromium package also supports running with blob drivers, same as how you would run offcial Chromium as docuemnted [above](#performance-comparison)_
