@@ -223,8 +223,8 @@ systemctl disable sshd.service
 ## Manual installation using pacstrap
 It is also possible to just `pacstrap` another installation from ground up like how you would do it on x86_64 ArchLinux following the [ArchLinux installation guide](https://wiki.archlinux.org/title/Installation_guide), using these images as your archiso-like installation media. Note the following differences:
 - You must deploy rkloader to either SPI Flash, eMMC or SD
-  - It needs to be oneone that is different from your current boot medium as it would later be removed.
-  - Imagine this as your PC UEFI BIOS, the board won't boot without it.
+  - It needs to be one that is different from your current boot medium as the current one would later be removed.
+  - Imagine this as your PC BIOS, the board won't boot without it.
 - The partition label can only be GPT
   - The u-boot inside the rkloader does not recognize MBR, it is hardcoded by Rockchip to do so to be compatible with their rkloader offset.
 - The boot partition needs to be marked as EFI system partition in the GPT, if it's not the first partition.
