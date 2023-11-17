@@ -1,11 +1,11 @@
 # Prebuilt ArchLinux ARM images for Orange Pi 5 / 5B / 5 plus
 
-**This project is neither affiliated with ArchLinuxARM nor OrangePi, it's my personal project and I purchased all the needed hardware by myself.**
+**This project is neither affiliated with ArchLinuxARM, ArchLinux nor OrangePi, it's my personal project and I purchased all the needed hardware by myself.**
 
 _This is the doc for the new images using purely Github Actions to deploy nightly, for the old doc for the old images, read [the old doc](README-old.md)_
 
 ## Installation
-Download a type of release from the [nightly release page](https://github.com/7Ji/orangepi5-archlinuxarm/releases/tag/nightly), there're multiple types of releases to choose from:
+Download a type of release from the [nightly release page](https://github.com/7Ji/orangepi5-archlinuxarm/releases/tag/nightly), there're multiple types of releases to choose from
  - `-root.tar`:
    - An archive of the complete rootfs which could be extracted to a partitioned disk, you can thus freely decide the partition layout
    - `/etc/fstab` and `/boot/extlinux/extlinux.conf` would need to be updated to point to your new, actual root partition 
@@ -33,7 +33,6 @@ Download a type of release from the [nightly release page](https://github.com/7J
    - DTB set to opi5plus
    - Can boot directly into the system if using opi5b. 
 
-
 ### Optional: Rkloader (Rockchip Bootloader)
 In the above releases, if you choose to use `-root.tar` or `-base.img` then there would be no rkloader included. You're free to allocate the bootloader drive, the boot drive, and the root drive. _E.g., a common choice would be SPI flash as bootloader driver, and your main NVMe/eMMC as boot+root so 0 byte would be wasted on bootloader_
 
@@ -41,7 +40,7 @@ The rkloader image is always 4MiB and should be stored at the beginning of SPI/S
 
 As long as there's at least one device containing rkloader then your device should boot, no matter it's the SD card, the eMMC, or the SPI flash. And as all of the opi5 family came with an on-board 16MiB/128Mb SPI flash, I'd always recommend using that for rkloader, to save space on your main system drive.
 
-You can download rkloaders for opi5 family from the [nightly release page](https://github.com/7Ji/orangepi5-rkloader/releases/tag/nightly) of my another project orangepi5-rklaoder, they're built and pushed everyday and always contain the latest BL31, DDR and u-boot.
+You can download rkloaders for opi5 family from the [nightly release page](https://github.com/7Ji/orangepi5-rkloader/releases/tag/nightly) of my another project orangepi5-rkloader, they're built and pushed everyday and always contain the latest BL31, DDR and u-boot.
 
 #### Writing to SPI flash
 Check the user manual of opi5/5b/5plus if you want to write under another Windows/Linux device.
@@ -219,6 +218,44 @@ sudo rm -rf /etc/systemd/network
 ```
 systemctl disable sshd.service
 ```
+
+
+## Manual installation using pacstrap
+It is also possible to just `pacstrap` another installation from ground up like how you would do it on x86_64 ArchLinux following the [ArchLinux installation guide](https://wiki.archlinux.org/title/Installation_guide), using these images as your archiso-like installation media. Note the following differences:
+- You must deploy rkloader to either SPI Flash, eMMC or SD
+  - It needs to be oneone that is different from your current boot medium as it would later be removed.
+  - Imagine this as your PC UEFI BIOS, the board won't boot without it.
+- The partition label can only be GPT
+  - The u-boot inside the rkloader does not recognize MBR, it is hardcoded by Rockchip to do so to be compatible with their rkloader offset.
+- The boot partition needs to be marked as EFI system partition in the GPT, if it's not the first partition.
+  - The u-boot picks GPT/MBR ESP -> MBR Boot -> first partition, as the partition to look for boot configuration.
+- It's not recommended to use fs or fs features added after 5.10.110.
+- It's recommendded to only create two partitions, one with FAT32 mounted at `/boot`, and another with your perferred root fs mounted at `/`
+  - Alternatively, the u-boot supports to read from an `ext4` partition, so you can just have one big root partition. 
+- Use `linux-aarch64-orangepi5` instead of `linux` as your kernel, `linux` is mainline kernel from ALARM official repo and won't work.
+- Use `linux-firmware-orangepi-git` instead of `linux-firmware` as your firmware, this contains essential wireless firmware for 5b. For 5+ or 5, `linux-firmware` also work, but takes more space
+- The boot configuration is `(/boot/)extlinux/extlinux.conf` inside the boot partition, and it uses a similar format to [syslinux format documented on ArchWiki](https://wiki.archlinux.org/title/Syslinux#Configuration).
+  - `LINUX` is the path of kernel relative to the filesystem root, e.g. 
+    ```
+    LINUX  /vmlinuz-linux-aarch64-orangepi5
+    ```
+  - `INITRD` for initramfs, similarly, e.g. 
+    ```
+    INITRD  /initramfs-linux-aarch64-orangepi5.img
+    ```
+  - `FDT` for Flattened Device Tree, or Device Tree Blob, similary, e.g. 
+    ```
+    FDT  /dtbs/linux-aarch64-orangepi5/rockchip/rk3588-orangepi-5-plus.dtb
+    ```
+  - `FDTOVERLAYS` is for a list for FDT/DTB overlays, only needed when you need the overlays, e.g.
+    ```
+    FDTOVERLAYS  /dtbs/linux-aarch64-orangepi5/rockchip/overlay/rk3588-hdmirx.dtbo /dtbs/linux-aarch64-orangepi5/rockchip/overlay/rk3588-disable-led.dtbo
+    ```
+  - `APPEND` is for kernel command line, e.g. 
+    ```
+    APPEND  root=/dev/disk/by-path/platform-fe2e0000.mmc-part2 rootflags=subvol=@root rw console=ttyFIQ00,1500000 console=tty1
+    ```  
+- Add [my repo](https://github.com/7Ji/archrepo) to the target installation if you want to upgrade later using only `pamcan -Syu`
 
 ## Advanced configuration
 
