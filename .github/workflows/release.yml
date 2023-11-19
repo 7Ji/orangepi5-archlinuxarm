@@ -36,15 +36,12 @@ jobs:
               tar -xf $i.tar
             fi
           done
-          if [[ -d cross_nobuild/src/pkg ]]; then
-            sudo chown -R root:root cross_nobuild/src/pkg
-          fi
       - name: Cross build
         run: ./cross_nobuild.sh
       - name: Pack sources
         run: |
-          tar -cf src.tar cross_nobuild/src
-          tar -cf bin.tar cross_nobuild/bin
+          tar -cf src.tar src
+          tar -cf bin.tar bin
       - name: Save sources
         uses: actions/cache/save@v3
         with:
@@ -60,6 +57,6 @@ jobs:
         with:
           name: Nightly
           tag: nightly
-          artifacts: cross_nobuild/out/latest/*
+          artifacts: out/latest/*
           allowUpdates: true
           removeArtifacts: true
