@@ -74,17 +74,33 @@ dump_binary_from_repo() { # 1: repo url, 2: repo name, 3: pkgname, 4: local bin,
     ln -sf "$4-${ver}" bin/"$4"
 }
 
+reap_children() { #1 kill arg
+    local children child
+    local i=0
+    while [[ $i -lt 100 ]]; do
+        children=($(pgrep -P$$))
+        if [[ "${#children[@]}" -eq 1 ]]; then # Only pgrep
+            return
+        fi
+        for child in "${children[@]}"; do
+            kill "$@" "${child}" 2>/dev/null || true
+        done
+        i=$(( $i + 1 ))
+        sleep 1
+    done
+}
+
 cleanup_parent() {
-    echo "=> Cleaning up before exiting..."
+    echo "=> Cleaning up before exiting (parent)..."
     # The root mount only lives inside the child namespace, no need to umount
     rm -rf cache/root
-    if [[ -n "${child_pid}" ]]; then
-        wait "${child_pid}"
-    fi
+    reap_children
 }
 
 cleanup_child() {
-    :
+    echo "=> Cleaning up before exiting (child)..."
+    mount proc /proc -t proc -o nosuid,noexec,nodev
+    reap_children -9
 }
 
 pacman_could_retry() {
@@ -517,11 +533,11 @@ spawn_and_wait() {
     # around this by calling newuidmap and newgidmap directly.
     unshare --user --pid --mount --fork \
         /bin/bash -e "${arg0}" --role child --uuid-root "${uuid_root}" --uuid-boot "${uuid_boot}" --build-id "${build_id}"  "${args[@]}" &
-    child_pid="$!"
-    newuidmap "${child_pid}" 0 "${uid}" 1 1 "${uid_start}" 65535
-    newgidmap "${child_pid}" 0 "${gid}" 1 1 "${gid_start}" 65535
-    wait "${child_pid}"
-    child_pid=
+    pid_child="$!"
+    newuidmap "${pid_child}" 0 "${uid}" 1 1 "${uid_start}" 65535
+    newgidmap "${pid_child}" 0 "${gid}" 1 1 "${gid_start}" 65535
+    wait "${pid_child}"
+    pid_child=
 }
 
 prepare_host() {
@@ -556,8 +572,8 @@ cleanup_cache() {
 }
 
 work_parent() {
-    check_identity_non_root
     trap "cleanup_parent" INT TERM EXIT
+    check_identity_non_root
     prepare_host
     spawn_and_wait
     # The child should have prepared the following artifacts: cache/root.img cache/boot.img cache/extlinux.conf
@@ -569,9 +585,9 @@ work_parent() {
 }
 
 work_child() {
+    trap "cleanup_child" INT TERM EXIT
     sleep 1
     check_identity_map_root
-    trap "cleanup_child" INT TERM EXIT
     mount_root
     bootstrap_root
     install_mkinitcpio
@@ -671,7 +687,7 @@ if [[ "${#install_pkgs_bootstrap[@]}" == 0 ]]; then
 fi
     
 if [[ "${#install_pkgs_normal[@]}" == 0 ]]; then
-    install_pkgs_normal=(vim nano sudo openssh linux-firmware-orangepi usb2host)
+    install_pkgs_normal=(vim nano sudo openssh linux-firmware-orangepi-git usb2host)
 fi
 
 if [[ "${#install_pkgs_kernel[@]}" == 0 ]]; then
@@ -692,7 +708,6 @@ uuid_boot_specifier="${uuid_boot_mkfs::4}-${uuid_boot_mkfs:4}"
 case "${role}" in
     parent) work_parent;;
     child) work_child;;
-    grandchild) work_grandchild;;
     *)
         echo 'ERROR: Role invalid: '"${role}"
         exit 1
