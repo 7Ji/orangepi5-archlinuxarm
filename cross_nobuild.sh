@@ -589,7 +589,7 @@ image_boot() {
     rm -f "${image}"
     truncate -s 100M "${image}"
     mkfs.vfat -n 'ALARMBOOT' -F 32 -i "${uuid_boot_mkfs}" "${image}"
-    mcopy -i "${image}" cache/root/boot/* ::
+    mcopy -osi "${image}" cache/root/boot/* ::
 }
 
 cleanup_boot() {
