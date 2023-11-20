@@ -1,9 +1,8 @@
 #!/bin/bash -e
 
-# The script would run as three different roles:
+# The script would run as two different roles:
 # 1 (role=parent, default). The one that user starts runs in the parent namespace, it spawns a child with unshared user,pid,mount namespaces
 # 2 (role=child). The second one runs in the child namespace, it sets up mounts 
-# XX REMOVED XX 3 (role=grandchild). The third one runs in the chroot in the child namespace
 
 # functions
 help() {
@@ -15,7 +14,7 @@ Build ArchLinux ARM images on an x86_64 host, rootless
   --install <pkg>           install the package into target image, can be specified multiple times
   --install-kernel <pkg>    install the kernel package into target image, also create booting configurations
   --install-bootstrap <pkg> install the package into target image at bootstrap stage, can be specified multiple times
-  --role parent/child/grandchild
+  --role parent/child
   --uuid-root <uuid>        uuid to be used for root ext4 fs
   --uuid-boot <uuid>        uuid to be used for boot fat32 fs, only first 8 chars used
   --build-id <id>           a string id for the build
@@ -125,7 +124,6 @@ check_identity_non_root() {
 }
 
 check_identity_map_root() {
-    # Refuse to continue if we're either not mapped to root, or are real root
     check_identity_root
     if touch /sys/sys_write_test; then
         echo "Child: ERROR: We can write to /sys, refuse to continue as real root"
@@ -199,11 +197,9 @@ prepare_pacman_static() {
 
 mount_root() {
     mount tmpfs-root cache/root -t tmpfs -o mode=0755,nosuid 
-    # mount tmpfs-boot cache/boot -t tmpfs -o mode=0755,nosuid
     mkdir -p cache/root/{boot,dev/{pts,shm},etc/pacman.d,proc,run,sys,tmp,var/{cache/pacman/pkg,lib/pacman,log}}
     chmod 1777 cache/root/{dev/shm,tmp}
     chmod 555 cache/root/{proc,sys}
-    # mount cache/{,root/}boot -o bind
     mount proc cache/root/proc -t proc -o nosuid,noexec,nodev
     mount devpts cache/root/dev/pts -t devpts -o mode=0620,gid=5,nosuid,noexec
     for node in full null random tty urandom zero; do
@@ -268,14 +264,12 @@ disable_network() {
 }
 
 bootstrap_root() {
-    # Base system
     pacman_could_retry -Sy --config cache/pacman-loose.conf --noconfirm "${install_pkgs_bootstrap[@]}"
     echo '[7Ji]
 Server = https://github.com/7Ji/archrepo/releases/download/$arch' >> cache/root/etc/pacman.conf
     enable_network
     chroot cache/root /bin/bash -c "pacman-key --init && pacman-key --populate"
     disable_network
-    # bin/pacman -Syu --config cache/pacman-strict.conf --noconfirm "${install_pkgs_normal[@]}"
 }
 
 install_mkinitcpio() {
@@ -378,7 +372,7 @@ UUID=${uuid_boot_specifier}	/boot	vfat	rw,noatime	0 2" >>  cache/root/etc/fstab
     # Temporary hack before https://gitlab.archlinux.org/archlinux/mkinitcpio/mkinitcpio/-/issues/218 is resolved
     sed -i 's/^HOOKS=(base udev autodetect modconf kms keyboard keymap consolefont block filesystems fsck)$/HOOKS=(base udev autodetect modconf keyboard keymap consolefont block filesystems fsck)/'  cache/root/etc/mkinitcpio.conf
 
-    # Things that need to bone inside the root
+    # Things that need to done inside the root
     chroot cache/root /bin/bash -ec 'locale-gen
 systemctl enable systemd-{network,resolve,timesync}d usb2host sshd
 useradd -g wheel -m alarm
@@ -394,7 +388,6 @@ archive_root() {
     mv "${archive}"{.temp,}
 }
 
-# Release resources
 image_disk() {
     local image=out/"${build_id}"-base.img
     local temp_image="${image}".temp
@@ -465,31 +458,6 @@ release() {
     done
     echo "Waiting for gzip processes to end..."
     wait ${pids_gzip[@]}
-}
-
-report_array() {
-    local arg
-    for arg in $@; do
-        printf " '${arg}'"
-    done
-}
-
-report_install_pkgs_bootstrap() {
-    if [[ ${#install_pkgs_bootstrap[@]} == 0 ]]; then
-        return
-    fi
-    printf "The following packages would be installed during the bootstrap phase:"
-    report_array "${install_pkgs_bootstrap[@]}"
-    echo
-}
-
-report_install_pkgs_normal() {
-    if [[ ${#install_pkgs_normal[@]} == 0 ]]; then
-        return
-    fi
-    printf "The following packages would be installed after the bootstrap phase:"
-    report_array "${install_pkgs_normal[@]}"
-    echo
 }
 
 get_subid() { #1 name #2 uid, #3 type
@@ -564,26 +532,6 @@ prepare_host() {
     prepare_pacman_configs
 }
 
-# prepare_image() {
-#     rm -f out/"${build_id}"-{base,part-{boot,root}}.img
-#     truncate -s 2G out/"${build_id}"-base.img
-#     truncate -s 100M out/"${build_id}"-part-boot.img
-#     truncate -s 1943M out/"${build_id}"-part-root.img
-
-#     echo 'label: gpt
-#     start=8192, size=204800, type=C12A7328-F81F-11D2-BA4B-00A0C93EC93B
-#     start=212992, size=3979264, type=B921B045-1DF0-41C3-AF44-4C6F280D3FAE' |
-#         sfdisk out/"${build_id}"-base.img
-    
-#     # Only 
-#     mkfs.vfat -n 'ALARMBOOT' -F 32 -i "${uuid_boot_mkfs}" out/"${build_id}"-part-boot.img
-
-#     # After the above logic, now we have three files:
-#     #  -base.img only contains the partition table, without partition content
-#     #  -part-boot.img contains an empty FAT32 partition, it should be populated later using mcopy in child, then modifed in parent
-#     #  -part-root.img contains nothing, it should be populated later using mkfs.ext4 in child
-# }
-
 image_boot() {
     local image=cache/boot.img
     rm -f "${image}"
@@ -612,7 +560,7 @@ work_parent() {
     trap "cleanup_parent" INT TERM EXIT
     prepare_host
     spawn_and_wait
-    # The child should have the following artifacts: cache/root.img cache/boot.img cache/extlinux.conf
+    # The child should have prepared the following artifacts: cache/root.img cache/boot.img cache/extlinux.conf
     # And the child should have already finished out/*-root.tar
     image_disk
     image_rkloader
