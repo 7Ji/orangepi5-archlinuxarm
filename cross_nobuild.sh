@@ -8,6 +8,8 @@
 # functions
 help() {
     echo '
+Build ArchLinux ARM images on an x86_64 host, rootless
+
 ./cross_nobuild.sh
 
   --install <pkg>           install the package into target image, can be specified multiple times
@@ -22,6 +24,7 @@ help() {
   --help                    print this message and early quit
 
 WARNING: CLI arguments are mostly for internal usage, you should not rely on its behaviour
+WARNING: This script is written for Ubuntu22.04, the exact environment that Github Actions provide
 '
 }
 dl() { # 1: url 2: output
