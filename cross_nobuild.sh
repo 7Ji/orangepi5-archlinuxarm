@@ -256,7 +256,8 @@ SigLevel = DatabaseOptional${pacman_mirrors}" > cache/pacman-strict.conf
 }
 
 enable_network() {
-    mount /etc/resolv.conf cache/root/etc/resolv.conf -o bind,ro
+    cat /etc/resolv.conf > cache/resolv.conf
+    mount cache/resolv.conf cache/root/etc/resolv.conf -o bind
 }
 
 disable_network() {
@@ -310,8 +311,7 @@ setup_kernel() {
     for module_dir in cache/root/usr/lib/modules/*; do
         cp "${module_dir}"/vmlinuz cache/root/boot/vmlinuz-$(<"${module_dir}"/pkgbase)
     done
-    # Temporary hack, remove || true after mkinitcpio is fixed
-    chroot cache/root mkinitcpio -P || true
+    chroot cache/root mkinitcpio -P
     # Manually compress
     for kernel in "${install_pkgs_kernel[@]}"; do
         mv cache/root/etc/mkinitcpio.d/"${kernel}".preset{.pacsave,}
@@ -371,6 +371,9 @@ UUID=${uuid_boot_specifier}	/boot	vfat	rw,noatime	0 2" >>  cache/root/etc/fstab
 
     # Actual resolv
     ln -sf /run/systemd/resolve/resolv.conf cache/root/etc/resolv.conf
+
+    # Temporary hack before https://gitlab.archlinux.org/archlinux/mkinitcpio/mkinitcpio/-/issues/218 is resolved
+    sed -i 's/^HOOKS=(base udev autodetect modconf kms keyboard keymap consolefont block filesystems fsck)$/HOOKS=(base udev autodetect modconf !kms keyboard keymap consolefont block filesystems fsck)/'  cache/root/etc/mkinitcpio.conf
 
     # Things that need to bone inside the root
     chroot cache/root /bin/bash -ec 'locale-gen
