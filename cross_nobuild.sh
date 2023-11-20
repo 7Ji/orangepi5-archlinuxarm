@@ -604,10 +604,6 @@ work_child() {
     image_root
 }
 
-work_grandchild() {
-    :
-}
-
 # Common main routine
 install_pkgs_bootstrap=()
 install_pkgs_normal=()
