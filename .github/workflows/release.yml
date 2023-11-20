@@ -14,7 +14,7 @@ jobs:
       - name: Prepare deps
         run: |
           sudo apt update
-          sudo apt install libarchive-tools qemu-user-static
+          sudo apt install libarchive-tools qemu-user-static mtools
       - name: Restore cached sources
         id: cache-restore-src
         uses: actions/cache/restore@v3
