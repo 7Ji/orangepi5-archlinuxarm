@@ -341,14 +341,16 @@ setup_extlinux() {
     local kernel
     for kernel in "${install_pkgs_kernel[@]}"; do
         printf \
-            "LABEL\t%s\n\tLINUX\t/%s\n\tINITRD\t/%s\n\tFDT\t/%s\n\tAPPEND\t%s\n" \
+            "LABEL\t%s\n\tLINUX\t/%s\n\tINITRD\t/%s\n\tFDT\t/%s\n\tFDTOVERLAYS\t%s\n\tAPPEND\t%s\n" \
             "${kernel}" \
             "vmlinuz-${kernel}" \
             "initramfs-${kernel}-fallback.img" \
             "dtbs/${kernel}/rockchip/rk3588s-orangepi-5.dtb" \
+            "${kernel}" \
             "root=UUID=${uuid_root} rw" >> "${conf}"
     done
-    install -DTm644 cache/{,root/boot/extlinux/}extlinux.conf
+    sed '/^FDTOVERLAYS\t'"${kernel}"'$/d' "${conf}" |
+        install -DTm644 /dev/stdin cache/root/boot/extlinux/extlinux.conf
 }
 
 install_pkgs() {
@@ -404,31 +406,52 @@ archive_root() {
     mv "${archive}"{.temp,}
 }
 
+set_parts() {
+    spart_label='gpt'
+    spart_firstlba='34'
+    spart_idbloader='start=64, size=960, type=8DA63339-0007-60C0-C436-083AC8230908, name="idbloader"'
+    spart_uboot='start=1024, size=6144, type=8DA63339-0007-60C0-C436-083AC8230908, name="uboot"'
+    spart_size_all=2048
+    spart_off_boot=4
+    spart_size_boot=256
+    local skt_off_boot=$(( ${spart_off_boot} * 2048 ))
+    local skt_size_boot=$(( ${spart_size_boot} * 2048 ))
+    spart_boot='start='"${skt_off_boot}"', size='"${skt_size_boot}"', type=C12A7328-F81F-11D2-BA4B-00A0C93EC93B, name="alarmboot"'
+    spart_off_root=$(( ${spart_off_boot} + ${spart_size_boot} ))
+    spart_size_root=$((  ${spart_size_all} - 1 - ${spart_off_root} ))
+    local skt_off_root=$(( ${spart_off_root} * 2048 ))
+    local skt_size_root=$(( ${spart_size_root} * 2048 ))
+    spart_root='start='"${skt_off_root}"', size='"${skt_size_root}"', type=B921B045-1DF0-41C3-AF44-4C6F280D3FAE, name="alarmroot"'
+}
+
 image_disk() {
     local image=out/"${build_id}"-base.img
     local temp_image="${image}".temp
     rm -f "${temp_image}"
-    truncate -s 2G "${temp_image}"
-    echo 'label: gpt
-        start=8192, size=204800, type=C12A7328-F81F-11D2-BA4B-00A0C93EC93B
-        start=212992, size=3979264, type=B921B045-1DF0-41C3-AF44-4C6F280D3FAE' |
-            sfdisk "${temp_image}"
-    dd if=cache/boot.img of="${temp_image}" bs=1M seek=4 conv=notrunc
-    dd if=cache/root.img of="${temp_image}" bs=1M seek=104 conv=notrunc
+    truncate -s "${spart_size_all}"M "${temp_image}"
+    echo "label: ${spart_label}
+${spart_boot}
+${spart_root}" | sfdisk "${temp_image}"
+    dd if=cache/boot.img of="${temp_image}" bs=1M seek="${spart_off_boot}" conv=notrunc
+    dd if=cache/root.img of="${temp_image}" bs=1M seek="${spart_off_root}" conv=notrunc
     sync
     mv "${temp_image}" "${image}"
 }
 
 image_rkloader() {
     suffixes=(root.tar base.img)
-    local table='label: gpt
-        first-lba: 34
-        start=64, size=960, type=8DA63339-0007-60C0-C436-083AC8230908, name="idbloader"
-        start=1024, size=6144, type=8DA63339-0007-60C0-C436-083AC8230908, name="uboot"
-        start=8192, size=204800, type=C12A7328-F81F-11D2-BA4B-00A0C93EC93B, name="alarmboot"
-        start=212992, size=3979264, type=B921B045-1DF0-41C3-AF44-4C6F280D3FAE, name="alarmroot"'
+    local table="label: ${spart_label}
+first-lba: ${spart_firstlba}
+${spart_idbloader}
+${spart_uboot}
+${spart_boot}
+${spart_root}"
     local base_image=out/"${build_id}"-base.img
-    local rkloader model image temp_image suffix fdt
+    local rkloader model image temp_image suffix fdt kernel pattern_remove_overlay= pattern_set_overlay=
+    for kernel in "${install_pkgs_kernel[@]}"; do
+        pattern_remove_overlay+=';/^\tFDTOVERLAYS\t'"${kernel}"'$/d'
+        pattern_set_overlay+=';s|^\tFDTOVERLAYS\t'"${kernel}"'$|\tFDTOVERLAYS\t/dtbs/'"${kernel}"'/rockchip/overlay/rk3588-ssd-sata0.dtbo|'
+    done
     for rkloader in "${rkloaders[@]}"; do
         model=${rkloader##*pi-}
         model=${model%%-bl31*}
@@ -441,21 +464,23 @@ image_rkloader() {
         dd if=src/rkloader/"${rkloader}" of="${temp_image}" conv=notrunc
         sfdisk "${temp_image}" <<< "${table}"
         case ${model} in
-        5)
-            mv "${temp_image}" "${image}"
-            continue
-        ;;
-        5_sata)
-            fdt='rk3588s-orangepi-5.dtb\n\tFDTOVERLAYS\t/dtbs/linux-aarch64-orangepi5/rockchip/overlay/rk3588-ssd-sata0.dtbo'
-        ;;
         5b)
             fdt='rk3588s-orangepi-5b.dtb'
         ;;
         5_plus)
             fdt='rk3588-orangepi-5-plus.dtb'
         ;;
+        *) # 5, 5_sata
+            fdt='rk3588s-orangepi-5.dtb'
+        ;;
         esac
+        # \n\tFDTOVERLAYS\t/dtbs/linux-aarch64-orangepi5/rockchip/overlay/rk3588-ssd-sata0.dtbo
         sed 's|rk3588s-orangepi-5.dtb|'"${fdt}"'|' cache/extlinux.conf > cache/extlinux.conf.temp
+        if [[ ${model} == '5_sata' ]]; then
+            sed -i "${pattern_set_overlay}" cache/extlinux.conf.temp
+        else
+            sed -i "${pattern_remove_overlay}" cache/extlinux.conf.temp
+        fi
         mcopy -oi cache/boot.img cache/extlinux.conf.temp ::extlinux/extlinux.conf
         sync
         dd if=cache/boot.img of="${temp_image}" bs=1M seek=4 conv=notrunc
@@ -551,7 +576,7 @@ prepare_host() {
 image_boot() {
     local image=cache/boot.img
     rm -f "${image}"
-    truncate -s 100M "${image}"
+    truncate -s "${spart_size_boot}"M "${image}"
     mkfs.vfat -n 'ALARMBOOT' -F 32 -i "${uuid_boot_mkfs}" "${image}"
     mcopy -osi "${image}" cache/root/boot/* ::
 }
@@ -563,7 +588,7 @@ cleanup_boot() {
 image_root() {
     local image=cache/root.img
     rm -f "${image}"
-    truncate -s 1943M "${image}"
+    truncate -s "${spart_size_root}"M "${image}"
     mkfs.ext4 -L 'ALARMROOT' -m 0 -U "${uuid_root}" -d cache/root "${image}"
 }
 
@@ -578,6 +603,7 @@ work_parent() {
     spawn_and_wait
     # The child should have prepared the following artifacts: cache/root.img cache/boot.img cache/extlinux.conf
     # And the child should have already finished out/*-root.tar
+    set_parts
     image_disk
     image_rkloader
     release
@@ -599,6 +625,7 @@ work_child() {
     cleanup_pkgs
     umount_root_sub
     archive_root
+    set_parts
     image_boot
     cleanup_boot
     image_root
@@ -687,7 +714,7 @@ if [[ "${#install_pkgs_normal[@]}" == 0 ]]; then
 fi
 
 if [[ "${#install_pkgs_kernel[@]}" == 0 ]]; then
-    install_pkgs_kernel=(linux-aarch64-orangepi5)
+    install_pkgs_kernel=(linux-aarch64-orangepi5{,-git})
 fi
 
 if [[ -z "${uuid_root}" ]]; then
