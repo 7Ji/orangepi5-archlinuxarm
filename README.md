@@ -280,7 +280,7 @@ _Some of the arch-independent ones are available from AUR so you can use AUR hel
 The main benefit of the repo is that you can use simply `pacman -Syu` to keep the kernels up-to-date, and install some packages conveniently which are needed for the following steps.
 
 ### Kernel selection
-The images pack two different kernel packages, [linux-aarch64-orangepi](https://github.com/7Ji-PKGBUILDs/linux-aarch64-orangepi5), which tracks the revision orangepi uses internal in their [build system](https://github.com/orangepi-xunlong/orangepi-build/tree/next/external/config/boards), and [linux-aarch64-orangepi-git](https://github.com/7Ji-PKGBUILDs/linux-aarch64-orangepi5-git), which tracks directly their kernel tree.
+The images pack two different kernel packages, [linux-aarch64-orangepi5](https://github.com/7Ji-PKGBUILDs/linux-aarch64-orangepi5), which tracks the revision orangepi uses internal in their [build system](https://github.com/orangepi-xunlong/orangepi-build/tree/next/external/config/boards), and [linux-aarch64-orangepi5-git](https://github.com/7Ji-PKGBUILDs/linux-aarch64-orangepi5-git), which tracks directly their kernel tree.
 
 All my kernel pacakges available under my repo do not conflict with each other, including these two.
 
