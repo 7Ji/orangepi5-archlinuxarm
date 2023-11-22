@@ -169,42 +169,47 @@ config_repos() {
 
 prepare_host_dirs() {
     rm -rf cache
-    mkdir -p {bin,cache/root,out,src/{rkloader,pkg}}
+    mkdir -p {bin,cache/{rkloader,root},out,src/{rkloader,pkg}}
 }
 
 get_rkloaders() {
-    # Get rkloaders
-    if [[ "${freeze_rkloaders}" ]]; then
-        echo "=> Updating of RKloaders skipped"
-        rkloaders=()
-        for rkloader in src/rkloader/*; do
-            rkloaders+=("${rkloader##*/}")
-        done
+    local rkloader_parent=https://github.com/7Ji/orangepi5-rkloader/releases/download/nightly
+    if [[ "${freeze_rkloaders}" && -f src/rkloader/list && -f src/rkloader/sha256sums ]]; then
+        cp src/rkloader/{list,sha256sums} cache/rkloader/
     else
-        echo "=> Updating RKloaders"
-        rkloader_parent=https://github.com/7Ji/orangepi5-rkloader/releases/download/nightly
-        rkloaders=($(dl "${rkloader_parent}"/list))
-        for rkloader in "${rkloaders[@]}"; do
-            if [[ ! -f src/rkloader/"${rkloader}" ]]; then
-                dl "${rkloader_parent}/${rkloader}" src/rkloader/"${rkloader}".temp
-                mv src/rkloader/"${rkloader}"{.temp,}
-            fi
-        done
-        for rkloader in src/rkloader/*; do
-            rkloader_local="${rkloader##*/}"
-            latest=''
-            for rkloader_cmp in "${rkloaders[@]}"; do
-                if [[ "${rkloader_local}" == "${rkloader_cmp}" ]]; then
-                    latest='yes'
-                    break
-                fi
-            done
-            if [[ -z "${latest}" ]]; then
-                rm -f "${rkloader}"
-            fi
-        done
-        echo "=> Updated RKloaders"
+        dl "${rkloader_parent}"/sha256sums cache/rkloader/sha256sums
+        dl "${rkloader_parent}"/list cache/rkloader/list
     fi
+    local sum=$(sed -n 's/\(^[0-9a-f]\{64\}\) \+list$/\1/p' cache/rkloader/sha256sums)
+    if [[ $(sha256sum cache/rkloader/list | cut -d ' ' -f 1) !=  "${sum}" ]]; then
+        echo 'ERROR: list sha256sum not right'
+        false
+    fi
+    local rkloader model name
+    rkloaders=($(<cache/rkloader/list))
+    for rkloader in "${rkloaders[@]}"; do
+        model="${rkloader%%:*}"
+        name="${rkloader#*:}"
+        sum=$(sed -n 's/\(^[0-9a-f]\{64\}\) \+'${name}'$/\1/p' cache/rkloader/sha256sums)
+        cp {src,cache}/rkloader/"${name}" || true
+        if [[ $(sha256sum cache/rkloader/"${name}" | cut -d ' ' -f 1) ==  "${sum}" ]]; then
+            continue
+        fi
+        dl "${rkloader_parent}/${name}" cache/rkloader/"${name}".temp
+        if [[ $(sha256sum cache/rkloader/"${name}".temp | cut -d ' ' -f 1) ==  "${sum}" ]]; then
+            mv cache/rkloader/"${name}"{.temp,}
+        else
+            echo "ERROR: Downloaded rkloader '${name}' is corrupted"
+            false
+        fi
+    done
+    rm -rf src/rkloader
+    mkdir src/rkloader
+    mv cache/rkloader/{list,sha256sums} src/rkloader/
+    for rkloader in "${rkloaders[@]}"; do
+        name="${rkloader#*:}"
+        mv {cache,src}/rkloader/"${name}"
+    done
 }
 
 prepare_pacman_static() {
@@ -453,15 +458,15 @@ ${spart_root}"
         pattern_set_overlay+=';s|^\tFDTOVERLAYS\t'"${kernel}"'$|\tFDTOVERLAYS\t/dtbs/'"${kernel}"'/rockchip/overlay/rk3588-ssd-sata0.dtbo|'
     done
     for rkloader in "${rkloaders[@]}"; do
-        model=${rkloader##*pi-}
-        model=${model%%-bl31*}
+        model="${rkloader%%:*}"
+        name="${rkloader#*:}"
         suffix="rkloader-${model}".img
         suffixes+=("${suffix}")
         image=out/"${build_id}"-"${suffix}"
         temp_image="${image}".temp
         # Use cp as it could reflink if the fs supports it
         cp "${base_image}" "${temp_image}"
-        dd if=src/rkloader/"${rkloader}" of="${temp_image}" conv=notrunc
+        gzip -cdk src/rkloader/"${name}" | dd of="${temp_image}" conv=notrunc
         sfdisk "${temp_image}" <<< "${table}"
         case ${model} in
         5b)
