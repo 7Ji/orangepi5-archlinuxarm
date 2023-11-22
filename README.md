@@ -279,6 +279,33 @@ _Some of the arch-independent ones are available from AUR so you can use AUR hel
 
 The main benefit of the repo is that you can use simply `pacman -Syu` to keep the kernels up-to-date, and install some packages conveniently which are needed for the following steps.
 
+### Kernel selection
+The images pack two different kernel packages, [linux-aarch64-orangepi](https://github.com/7Ji-PKGBUILDs/linux-aarch64-orangepi5), which tracks the revision orangepi uses internal in their [build system](https://github.com/orangepi-xunlong/orangepi-build/tree/next/external/config/boards), and [linux-aarch64-orangepi-git](https://github.com/7Ji-PKGBUILDs/linux-aarch64-orangepi5-git), which tracks directly their kernel tree.
+
+All my kernel pacakges available under my repo do not conflict with each other, including these two.
+
+As of this writting, the non-git version is at `5.10.110-6`, and the -git version is at `5.10.160.r48.eb1c681e5.ced0156-1`. The default boot target is the non-git version, but I highly recommend to migrate to the -git version.
+
+The booting configration `/boot/extlinux/extlinux.conf` should look like this in a new installation:
+```
+DEFAULT linux-aarch64-orangepi5
+LABEL   linux-aarch64-orangepi5
+        LINUX   /vmlinuz-linux-aarch64-orangepi5
+        INITRD  /initramfs-linux-aarch64-orangepi5-fallback.img
+        FDT     /dtbs/linux-aarch64-orangepi5/rockchip/rk3588s-orangepi-5.dtb
+        FDTOVERLAYS     /dtbs/linux-aarch64-orangepi5/rockchip/overlay/rk3588-ssd-sata0.dtbo
+        APPEND  root=UUID=61c8756a-f424-4f05-99e9-0318ad48afa8 rw
+LABEL   linux-aarch64-orangepi5-git
+        LINUX   /vmlinuz-linux-aarch64-orangepi5-git
+        INITRD  /initramfs-linux-aarch64-orangepi5-git-fallback.img
+        FDT     /dtbs/linux-aarch64-orangepi5-git/rockchip/rk3588s-orangepi-5.dtb
+        FDTOVERLAYS     /dtbs/linux-aarch64-orangepi5-git/rockchip/overlay/rk3588-ssd-sata0.dtbo
+        APPEND  root=UUID=61c8756a-f424-4f05-99e9-0318ad48afa8 rw
+```
+To switch the version, simple modify the `DEFAULT` line and point it to a different `LABEL`.
+
+If you want to be able to change the booting target interactively during the boot process, you can add a line like `TIMEOUT 30` after the `DEFAULT` line, which means to wait for 3 seconds to let you make the choice. Personally I feel this a waste of time because I use them as headless servers.
+
 ### Desktop environment
 
 The released images and rootfs/pkg archives in this repo are bare-minimum CLI images without any desktop environment.
