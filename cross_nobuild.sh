@@ -352,7 +352,7 @@ setup_extlinux() {
             "initramfs-${kernel}-fallback.img" \
             "dtbs/${kernel}/rockchip/rk3588s-orangepi-5.dtb" \
             "${kernel}" \
-            "root=UUID=${uuid_root} rw" >> "${conf}"
+            "root=UUID=${uuid_root} rw cma=128M" >> "${conf}"
     done
     sed '/^FDTOVERLAYS\t'"${kernel}"'$/d' "${conf}" |
         install -DTm644 /dev/stdin cache/root/boot/extlinux/extlinux.conf
