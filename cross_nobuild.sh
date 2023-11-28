@@ -188,8 +188,7 @@ get_rkloaders() {
     local rkloader model name
     rkloaders=($(<cache/rkloader/list))
     for rkloader in "${rkloaders[@]}"; do
-        model="${rkloader%%:*}"
-        name="${rkloader#*:}"
+        name="${rkloader##*:}"
         sum=$(sed -n 's/\(^[0-9a-f]\{64\}\) \+'${name}'$/\1/p' cache/rkloader/sha256sums)
         cp {src,cache}/rkloader/"${name}" || true
         if [[ $(sha256sum cache/rkloader/"${name}" | cut -d ' ' -f 1) ==  "${sum}" ]]; then
@@ -207,7 +206,7 @@ get_rkloaders() {
     mkdir src/rkloader
     mv cache/rkloader/{list,sha256sums} src/rkloader/
     for rkloader in "${rkloaders[@]}"; do
-        name="${rkloader#*:}"
+        name="${rkloader##*:}"
         mv {cache,src}/rkloader/"${name}"
     done
 }
@@ -458,8 +457,13 @@ ${spart_root}"
         pattern_set_overlay+=';s|^\tFDTOVERLAYS\t'"${kernel}"'$|\tFDTOVERLAYS\t/dtbs/'"${kernel}"'/rockchip/overlay/rk3588-ssd-sata0.dtbo|'
     done
     for rkloader in "${rkloaders[@]}"; do
-        model="${rkloader%%:*}"
-        name="${rkloader#*:}"
+        type="${rkloader%%:*}"
+        if [[ ${type} != vendor ]]; then
+            continue
+        fi
+        model="${rkloader%:*}"
+        model="${model#*:}"
+        name="${rkloader##*:}"
         suffix="rkloader-${model}".img
         suffixes+=("${suffix}")
         image=out/"${build_id}"-"${suffix}"
@@ -468,7 +472,7 @@ ${spart_root}"
         cp "${base_image}" "${temp_image}"
         gzip -cdk src/rkloader/"${name}" | dd of="${temp_image}" conv=notrunc
         sfdisk "${temp_image}" <<< "${table}"
-        case ${model} in
+        case ${model#orangepi_} in
         5b)
             fdt='rk3588s-orangepi-5b.dtb'
         ;;
