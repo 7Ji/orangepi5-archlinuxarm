@@ -289,7 +289,9 @@ bootstrap_root() {
 Server = https://github.com/7Ji/archrepo/releases/download/$arch' >> cache/root/etc/pacman.conf
     enable_network
     rm -rf cache/root/etc/pacman.d/gnupg
-    chroot cache/root /bin/bash -c "pacman-key --init && pacman-key --populate"
+    # GnuPG > 2.4.3-2 does not like SHA1 only key, which is what ALARM Builder uses
+    # :-( Sigh, let's lsign the key manually to give it full trust
+    chroot cache/root /bin/bash -c "pacman-key --init && pacman-key --populate && pacman-key --lsign 68B3537F39A313B3E574D06777193F152BDBE6A6"
     disable_network
 }
 
