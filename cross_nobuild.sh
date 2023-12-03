@@ -288,6 +288,7 @@ bootstrap_root() {
     echo '[7Ji]
 Server = https://github.com/7Ji/archrepo/releases/download/$arch' >> cache/root/etc/pacman.conf
     enable_network
+    rm -rf cache/root/etc/pacman.d/gnupg
     chroot cache/root /bin/bash -c "pacman-key --init && pacman-key --populate"
     disable_network
 }
