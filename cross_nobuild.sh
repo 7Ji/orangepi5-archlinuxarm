@@ -398,9 +398,9 @@ UUID=${uuid_boot_specifier}	/boot	vfat	rw,noatime	0 2" >>  cache/root/etc/fstab
     sed -i 's/^HOOKS=(base udev autodetect modconf kms keyboard keymap consolefont block filesystems fsck)$/HOOKS=(base udev autodetect modconf keyboard keymap consolefont block filesystems fsck)/'  cache/root/etc/mkinitcpio.conf
 
     # Things that need to done inside the root
-    chroot cache/root /bin/bash -ec 'locale-gen
+    chroot cache/root /bin/bash -ec "locale-gen
 systemctl enable systemd-{network,resolve,timesync}d usb2host sshd
-useradd --groups wheel --create-home --password "$y$j9T$V7MgkxDRHnWiNjLXIc1sZ0$/kcR9i4temq/pNJaV5aRr88PTzzfc7nHf0AEkUQv6j7" alarm'
+useradd --groups wheel --create-home --password '"'$y$j9T$raNZsZE8wMTuGo2FHnYBK/$0Z0OEtF62U.wONdo.nyd/GodMLEh62kTdZXeb10.yT7'"' alarm"
 }
 
 archive_root() {
