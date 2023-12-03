@@ -397,8 +397,7 @@ UUID=${uuid_boot_specifier}	/boot	vfat	rw,noatime	0 2" >>  cache/root/etc/fstab
     # Things that need to done inside the root
     chroot cache/root /bin/bash -ec 'locale-gen
 systemctl enable systemd-{network,resolve,timesync}d usb2host sshd
-useradd -g wheel -m alarm
-printf "%s\n" alarm_please_change_me alarm_please_change_me | passwd alarm'
+useradd --groups wheel --create-home --password "$y$j9T$V7MgkxDRHnWiNjLXIc1sZ0$/kcR9i4temq/pNJaV5aRr88PTzzfc7nHf0AEkUQv6j7" alarm'
 }
 
 archive_root() {
