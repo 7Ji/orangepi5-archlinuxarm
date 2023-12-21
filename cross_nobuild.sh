@@ -156,7 +156,11 @@ config_repos() {
     else
         mirror_archlinux=${mirror_archlinux:-https://geo.mirror.pkgbuild.com}
         mirror_archlinuxarm=${mirror_alarm:-http://mirror.archlinuxarm.org}
-        mirror_archlinuxcn=${mirror_archlinuxcn:-https://opentuna.cn/archlinuxcn}
+        if ping -w1 google.com &>/dev/null; then
+            mirror_archlinuxcn=${mirror_archlinuxcn:-https://mirrors.xtom.us/archlinuxcn}
+        else
+            mirror_archlinuxcn=${mirror_archlinuxcn:-https://mirrors.tuna.tsinghua.edu.cn/archlinuxcn}
+        fi
         mirror_7Ji=${mirror_7Ji:-https://github.com/7Ji/archrepo/releases/download}
     fi
     # Mainly for pacman-static
