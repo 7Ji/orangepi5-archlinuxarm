@@ -2,8 +2,6 @@
 
 **This project is neither affiliated with ArchLinuxARM, ArchLinux nor OrangePi, it's my personal project and I purchased all the needed hardware by myself.**
 
-_This is the doc for the new images using purely Github Actions to deploy nightly, for the old doc for the old images, read [the old doc](README-old.md)_
-
 ## Installation
 Download a type of release from the [nightly release page](https://github.com/7Ji/orangepi5-archlinuxarm/releases/tag/nightly), there're multiple types of releases to choose from
  - `-root.tar`:
