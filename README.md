@@ -29,7 +29,7 @@ Download a type of release from the [nightly release page](https://github.com/7J
  - `-5_plus.img`
    - Same as `-base.img` but opi5plus' rkloader is written in the image
    - DTB set to opi5plus
-   - Can boot directly into the system if using opi5b. 
+   - Can boot directly into the system if using opi5plus. 
 
 ### Optional: Rkloader (Rockchip Bootloader)
 In the above releases, if you choose to use `-root.tar` or `-base.img` then there would be no rkloader included. You're free to allocate the bootloader drive, the boot drive, and the root drive. _E.g., a common choice would be SPI flash as bootloader driver, and your main NVMe/eMMC as boot+root so 0 byte would be wasted on bootloader_
