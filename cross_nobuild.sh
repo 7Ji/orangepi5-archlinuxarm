@@ -401,7 +401,7 @@ UUID=${uuid_boot_specifier}	/boot	vfat	rw,noatime	0 2" >>  cache/root/etc/fstab
     ln -sf /run/systemd/resolve/resolv.conf cache/root/etc/resolv.conf
 
     # Temporary hack before https://gitlab.archlinux.org/archlinux/mkinitcpio/mkinitcpio/-/issues/218 is resolved
-    sed -i 's/^HOOKS=(base udev autodetect modconf kms keyboard keymap consolefont block filesystems fsck)$/HOOKS=(base udev autodetect modconf keyboard keymap consolefont block filesystems fsck)/'  cache/root/etc/mkinitcpio.conf
+    sed -i 's/ kms //'  cache/root/etc/mkinitcpio.conf
 
     # Things that need to done inside the root
     chroot cache/root /bin/bash -ec "locale-gen
