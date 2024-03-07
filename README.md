@@ -142,24 +142,24 @@ It is also possible to just `pacstrap` another installation from ground up like 
 - It's not recommended to use fs or fs features added after 5.10.110.
 - It's recommendded to only create two partitions, one with FAT32 mounted at `/boot`, and another with your perferred root fs mounted at `/`
   - Alternatively, the u-boot supports to read from an `ext4` partition, so you can just have one big root partition. 
-- Use `linux-aarch64-orangepi5` instead of `linux` as your kernel, `linux` is mainline kernel from ALARM official repo and won't work.
+- Use `linux-aarch64-rockchip-rk3588-bsp5.10-orangepi` instead of `linux` as your kernel, `linux` is mainline kernel from ALARM official repo and won't work.
 - Use `linux-firmware-orangepi-git` instead of `linux-firmware` as your firmware, this contains essential wireless firmware for 5b. For 5+ or 5, `linux-firmware` also work, but takes more space
 - The boot configuration is `(/boot/)extlinux/extlinux.conf` inside the boot partition, and it uses a similar format to [syslinux format documented on ArchWiki](https://wiki.archlinux.org/title/Syslinux#Configuration).
   - `LINUX` is the path of kernel relative to the filesystem root, e.g. 
     ```
-    LINUX  /vmlinuz-linux-aarch64-orangepi5
+    LINUX  /vmlinuz-linux-aarch64-rockchip-rk3588-bsp5.10-orangepi
     ```
   - `INITRD` for initramfs, similarly, e.g. 
     ```
-    INITRD  /initramfs-linux-aarch64-orangepi5.img
+    INITRD  /initramfs-linux-aarch64-rockchip-rk3588-bsp5.10-orangepi.img
     ```
   - `FDT` for Flattened Device Tree, or Device Tree Blob, similary, e.g. 
     ```
-    FDT  /dtbs/linux-aarch64-orangepi5/rockchip/rk3588-orangepi-5-plus.dtb
+    FDT  /dtbs/linux-aarch64-rockchip-rk3588-bsp5.10-orangepi/rockchip/rk3588-orangepi-5-plus.dtb
     ```
   - `FDTOVERLAYS` is for a list for FDT/DTB overlays, only needed when you need the overlays, e.g.
     ```
-    FDTOVERLAYS  /dtbs/linux-aarch64-orangepi5/rockchip/overlay/rk3588-hdmirx.dtbo /dtbs/linux-aarch64-orangepi5/rockchip/overlay/rk3588-disable-led.dtbo
+    FDTOVERLAYS  /dtbs/linux-aarch64-rockchip-rk3588-bsp5.10-orangepi/rockchip/overlay/rk3588-hdmirx.dtbo /dtbs/linux-aarch64-rockchip-rk3588-bsp5.10-orangepi/rockchip/overlay/rk3588-disable-led.dtbo
     ```
   - `APPEND` is for kernel command line, e.g. 
     ```
@@ -190,7 +190,7 @@ _Some of the arch-independent ones are available from AUR so you can use AUR hel
 The main benefit of the repo is that you can use simply `pacman -Syu` to keep the kernels up-to-date, and install some packages conveniently which are needed for the following steps.
 
 ### Kernel selection
-The images pack two different kernel packages, [linux-aarch64-orangepi5](https://github.com/7Ji-PKGBUILDs/linux-aarch64-orangepi5), which tracks the revision orangepi uses internal in their [build system](https://github.com/orangepi-xunlong/orangepi-build/tree/next/external/config/boards), and [linux-aarch64-orangepi5-git](https://github.com/7Ji-PKGBUILDs/linux-aarch64-orangepi5-git), which tracks directly their kernel tree.
+The images pack two different kernel packages, [linux-aarch64-rockchip-rk3588-bsp5.10-orangepi](https://github.com/7Ji-PKGBUILDs/linux-aarch64-rockchip-rk3588-bsp5.10-orangepi), which tracks the revision orangepi uses internal in their [build system](https://github.com/orangepi-xunlong/orangepi-build/tree/next/external/config/boards), and [linux-aarch64-rockchip-rk3588-bsp5.10-orangepi-git](https://github.com/7Ji-PKGBUILDs/linux-aarch64-rockchip-rk3588-bsp5.10-orangepi-git), which tracks directly their kernel tree.
 
 All my kernel pacakges available under my repo do not conflict with each other, including these two.
 
@@ -198,18 +198,18 @@ As of this writting, the non-git version is at `5.10.110-6`, and the -git versio
 
 The booting configration `/boot/extlinux/extlinux.conf` should look like this in a new installation:
 ```
-DEFAULT linux-aarch64-orangepi5
-LABEL   linux-aarch64-orangepi5
-        LINUX   /vmlinuz-linux-aarch64-orangepi5
-        INITRD  /initramfs-linux-aarch64-orangepi5-fallback.img
-        FDT     /dtbs/linux-aarch64-orangepi5/rockchip/rk3588s-orangepi-5.dtb
-        FDTOVERLAYS     /dtbs/linux-aarch64-orangepi5/rockchip/overlay/rk3588-ssd-sata0.dtbo
+DEFAULT linux-aarch64-rockchip-rk3588-bsp5.10-orangepi
+LABEL   linux-aarch64-rockchip-rk3588-bsp5.10-orangepi
+        LINUX   /vmlinuz-linux-aarch64-rockchip-rk3588-bsp5.10-orangepi
+        INITRD  /initramfs-linux-aarch64-rockchip-rk3588-bsp5.10-orangepi-fallback.img
+        FDT     /dtbs/linux-aarch64-rockchip-rk3588-bsp5.10-orangepi/rockchip/rk3588s-orangepi-5.dtb
+        FDTOVERLAYS     /dtbs/linux-aarch64-rockchip-rk3588-bsp5.10-orangepi/rockchip/overlay/rk3588-ssd-sata0.dtbo
         APPEND  root=UUID=61c8756a-f424-4f05-99e9-0318ad48afa8 rw
-LABEL   linux-aarch64-orangepi5-git
-        LINUX   /vmlinuz-linux-aarch64-orangepi5-git
-        INITRD  /initramfs-linux-aarch64-orangepi5-git-fallback.img
-        FDT     /dtbs/linux-aarch64-orangepi5-git/rockchip/rk3588s-orangepi-5.dtb
-        FDTOVERLAYS     /dtbs/linux-aarch64-orangepi5-git/rockchip/overlay/rk3588-ssd-sata0.dtbo
+LABEL   linux-aarch64-rockchip-rk3588-bsp5.10-orangepi-git
+        LINUX   /vmlinuz-linux-aarch64-rockchip-rk3588-bsp5.10-orangepi-git
+        INITRD  /initramfs-linux-aarch64-rockchip-rk3588-bsp5.10-orangepi-git-fallback.img
+        FDT     /dtbs/linux-aarch64-rockchip-rk3588-bsp5.10-orangepi-git/rockchip/rk3588s-orangepi-5.dtb
+        FDTOVERLAYS     /dtbs/linux-aarch64-rockchip-rk3588-bsp5.10-orangepi-git/rockchip/overlay/rk3588-ssd-sata0.dtbo
         APPEND  root=UUID=61c8756a-f424-4f05-99e9-0318ad48afa8 rw
 ```
 To switch the version, simple modify the `DEFAULT` line and point it to a different `LABEL`.
