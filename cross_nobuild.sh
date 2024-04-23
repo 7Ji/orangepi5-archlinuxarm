@@ -354,11 +354,11 @@ DEFAULT ${install_pkgs_kernel[0]}" > "${conf}"
     local kernel
     for kernel in "${install_pkgs_kernel[@]}"; do
         printf \
-            "LABEL\t%s\n\tLINUX\t/%s\n\tINITRD\t/%s\n\tFDT\t/%s\n\tFDTOVERLAYS\t%s\n\tAPPEND\t%s\n" \
+            "LABEL\t%s\n\tLINUX\t/%s\n\tINITRD\t/%s\n\t#FDTDIR\t/%s\n\tFDT\t/%s\n\tFDTOVERLAYS\t%s\n\tAPPEND\t%s\n" \
             "${kernel}" \
             "vmlinuz-${kernel}" \
             "initramfs-${kernel}-fallback.img" \
-            "dtbs/${kernel}/rockchip/rk3588s-orangepi-5.dtb" \
+            "dtbs/${kernel}"{,/rockchip/rk3588s-orangepi-5.dtb} \
             "${kernel}" \
             "root=UUID=${uuid_root} rw" >> "${conf}"
     done
