@@ -383,7 +383,7 @@ UUID=${uuid_boot_specifier}	/boot	vfat	rw,noatime	0 2" >>  cache/root/etc/fstab
     # Timezone
     ln -sf "/usr/share/zoneinfo/UTC" cache/root/etc/localtime
     # Locale
-    sed -i 's/^#\(en_US.UTF-8  \)$/\1/g' cache/root/etc/locale.gen
+    sed -i 's/^#\(en_US.UTF-8 UTF-8  \)$/\1/g' cache/root/etc/locale.gen
     echo 'LANG=en_US.UTF-8' > cache/root/etc/locale.conf
 
     # Network
