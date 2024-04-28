@@ -596,6 +596,7 @@ spawn_and_wait() {
     unshare --user --pid --mount --fork \
         /bin/bash -e "${arg0}" --role child --uuid-root "${uuid_root}" --uuid-boot "${uuid_boot}" --build-id "${build_id}"  "${args[@]}" &
     pid_child="$!"
+    sleep 1
     newuidmap "${pid_child}" 0 "${uid}" 1 1 "${uid_start}" 65535
     newgidmap "${pid_child}" 0 "${gid}" 1 1 "${gid_start}" 65535
     wait "${pid_child}"
@@ -649,7 +650,7 @@ work_parent() {
 
 work_child() {
     trap "cleanup_child" INT TERM EXIT
-    sleep 1
+    sleep 3
     check_identity_map_root
     mount_root
     bootstrap_root
