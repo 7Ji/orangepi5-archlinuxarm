@@ -226,7 +226,6 @@ mount_root() {
     chmod 555 cache/root/{proc,sys}
     mount proc cache/root/proc -t proc -o nosuid,noexec,nodev
     mount devpts cache/root/dev/pts -t devpts -o mode=0620,gid=5,nosuid,noexec
-    mount /sys/module cache/root/sys/module -o bind,ro
     for node in full null random tty urandom zero; do
         devnode=cache/root/dev/"${node}"
         touch "${devnode}"
@@ -247,7 +246,6 @@ umount_root_sub() {
         umount --lazy cache/root/dev/"${node}"
     done
     umount --lazy cache/root/proc
-    umount --lazy cache/root/sys/module
     rm -rf cache/root/sys/module cache/root/dev/*
 }
 
