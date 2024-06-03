@@ -265,7 +265,7 @@ However, at least from my tests, the results could be even worse than panfork ME
 
 #### Performance comparison
 Here're a few performance comparisons for the drivers:
- - http://webglsamples.org/aquarium/aquarium.html , a WebGL demo, default setting
+ - http://webglsamples.org/aquarium/aquarium.html , a WebGL demo, default setting (all using [chromium-mpp] (see below))
    - panfork mesa, stock, `chromium`, 35~40 fps
    - panfork mesa, gofaster, `PAN_MESA_DEBUG=gofaster chromium`, ~ 60fps (limtied by vsync)
    - blob, `LD_LIBRARY_PATH=/usr/lib/mali-valhall-g610/x11-gbm chromium --use-gl=egl`, 95~120 fps
@@ -294,6 +294,9 @@ A rockchip mpp enabled Chromium package is also available from https://github.co
 sudo pacman -Syu chromium-mpp
 ```
 
-The package needs extra setup before running, which is documented [here](https://github.com/7Ji-PKGBUILDs/chromium-mpp)
+The package needs extra setup before running, which is documented [here][chromium-mpp]
 
 _This Chromium package also supports running with blob drivers, same as how you would run offcial Chromium as docuemnted [above](#performance-comparison)_
+
+
+[chromium-mpp]: https://github.com/7Ji-PKGBUILDs/chromium-mpp
