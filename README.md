@@ -31,10 +31,55 @@ Download a type of release from the [nightly release page](https://github.com/7J
    - DTB set to opi5plus
    - Can boot directly into the system if using opi5plus. 
 
-### Optional: Rkloader (Rockchip Bootloader)
+## Optional: Rkloader (Rockchip Bootloader)
 In the above releases, if you choose to use `-root.tar` or `-base.img` then there would be no rkloader included. You're free to allocate the bootloader drive, the boot drive, and the root drive. _E.g., a common choice would be SPI flash as bootloader driver, and your main NVMe/eMMC as boot+root so 0 byte would be wasted on bootloader_
 
 Download rkloaders from my another project [orangepi5-rkloader](https://github.com/7Ji/orangepi5-rkloader) and follow the installation guide there.
+
+## Optional: Partition resizing
+None of the `*.img` releases would resize the root partition on boot, if you want the remaining space be taken, you'll need to resize by yourself, either before booting (recommended) or after booting (dangerous). Do so on Linux with `fdisk` deleting old -> creating new not earsing ext4 signature -> `e2fsck -f` -> `resize2fs`.
+
+## Optional: Kernel selection
+The images pack four different kernel packages:
+- [linux-aarch64-rockchip-rk3588-bsp5.10-orangepi-git](https://github.com/7Ji-PKGBUILDs/linux-aarch64-rockchip-rk3588-bsp5.10-orangepi-git), which tracks directly Orange Pi's BSP 5.10 kernel tree, _5.10.160 as of writing_, is the default kernel to boot, it's stable and ready to use.
+- [linux-aarch64-rockchip-bsp6.1-joshua-git](https://github.com/7Ji-PKGBUILDs/linux-aarch64-rockchip-bsp6.1-joshua-git), which tracks Joshua Reik's [BSP 6.1 kernel tree](https://github.com/Joshua-Riek/linux-rockchip), with [Hüseyin BIYIK](https://github.com/hbiyik)'s panthor backport, _6.1.75 as of writing_, is recommended if you want both stability and kind-of cutting edge features.
+- [linux-aarch64-rockchip-armbian-git](https://github.com/7Ji-PKGBUILDs/linux-aarch64-rockchip-armbian-git), which tracks mainline with many backported patches, is the only one that releases mainline release candidates, _6.10-rc7 as of writing_, is recommended if you want cutting edge features like in-tree panthor.
+- [linux-aarch64-7ji](https://github.com/7Ji-PKGBUILDs/linux-aarch64-7ji), which tracks mostly mainline, but with [a few of my patches](https://github.com/7Ji/linux) applied, _6.9.6 as of writing_, is recommended if you want stable mainline releases.
+
+
+The booting configration `/boot/extlinux/extlinux.conf` (`extlinux/extlinux.conf` in the boot partition, 3rd on disk if you're using `*.img` releases) should look like this in a new installation:
+```
+MENU TITLE Select the kernel to boot
+TIMEOUT 30
+DEFAULT linux-aarch64-rockchip-rk3588-bsp5.10-orangepi-git
+LABEL   linux-aarch64-rockchip-rk3588-bsp5.10-orangepi-git
+        LINUX   /vmlinuz-linux-aarch64-rockchip-rk3588-bsp5.10-orangepi-git
+        INITRD  /booster-linux-aarch64-rockchip-rk3588-bsp5.10-orangepi-git.img
+        #FDTDIR /dtbs/linux-aarch64-rockchip-rk3588-bsp5.10-orangepi-git
+        FDT     /dtbs/linux-aarch64-rockchip-rk3588-bsp5.10-orangepi-git/rockchip/rk3588s-orangepi-5.dtb
+        APPEND  root=UUID=a701c18a-e0fb-45c9-9fcf-0a959f665de8 rw
+LABEL   linux-aarch64-rockchip-bsp6.1-joshua-git
+        LINUX   /vmlinuz-linux-aarch64-rockchip-bsp6.1-joshua-git
+        INITRD  /booster-linux-aarch64-rockchip-bsp6.1-joshua-git.img
+        #FDTDIR /dtbs/linux-aarch64-rockchip-bsp6.1-joshua-git
+        FDT     /dtbs/linux-aarch64-rockchip-bsp6.1-joshua-git/rockchip/rk3588s-orangepi-5.dtb
+        APPEND  root=UUID=a701c18a-e0fb-45c9-9fcf-0a959f665de8 rw
+LABEL   linux-aarch64-rockchip-armbian-git
+        LINUX   /vmlinuz-linux-aarch64-rockchip-armbian-git
+        INITRD  /booster-linux-aarch64-rockchip-armbian-git.img
+        #FDTDIR /dtbs/linux-aarch64-rockchip-armbian-git
+        FDT     /dtbs/linux-aarch64-rockchip-armbian-git/rockchip/rk3588s-orangepi-5.dtb
+        APPEND  root=UUID=a701c18a-e0fb-45c9-9fcf-0a959f665de8 rw
+LABEL   linux-aarch64-7ji
+        LINUX   /vmlinuz-linux-aarch64-7ji
+        INITRD  /booster-linux-aarch64-7ji.img
+        #FDTDIR /dtbs/linux-aarch64-7ji
+        FDT     /dtbs/linux-aarch64-7ji/rockchip/rk3588s-orangepi-5.dtb
+        APPEND  root=UUID=a701c18a-e0fb-45c9-9fcf-0a959f665de8 rw
+```
+On booting, you would be prompted for which kernel to boot on serial console, and after 3 seconds the one defined at `DEFAULT` would be chosen.
+
+To switch default version, modify the `DEFAULT` line and point it to a different `LABEL`.
 
 ## Optional: Boot Configuration
 If you're not using the dedicated images, but using `-base.img` or `-root.tar`, then you need to adapt the bootup configurations. In other word, skip this part if you're using `-5/5_sata/5b/5_plus.img`.
@@ -142,7 +187,7 @@ It is also possible to just `pacstrap` another installation from ground up like 
 - It's not recommended to use fs or fs features added after 5.10.110.
 - It's recommendded to only create two partitions, one with FAT32 mounted at `/boot`, and another with your perferred root fs mounted at `/`
   - Alternatively, the u-boot supports to read from an `ext4` partition, so you can just have one big root partition. 
-- Use `linux-aarch64-rockchip-rk3588-bsp5.10-orangepi` instead of `linux` as your kernel, `linux` is mainline kernel from ALARM official repo and won't work.
+- Use `linux-aarch64-rockchip-rk3588-bsp5.10-orangepi-git` (or any other, check the [Kernel selection](#kernel-selection) section below for available kernels) instead of `linux` as your kernel, `linux` is mainline kernel from ALARM official repo and won't work.
 - Use `linux-firmware-orangepi-git` instead of `linux-firmware` as your firmware, this contains essential wireless firmware for 5b. For 5+ or 5, `linux-firmware` also work, but takes more space
 - The boot configuration is `(/boot/)extlinux/extlinux.conf` inside the boot partition, and it uses a similar format to [syslinux format documented on ArchWiki](https://wiki.archlinux.org/title/Syslinux#Configuration).
   - `LINUX` is the path of kernel relative to the filesystem root, e.g. 
@@ -153,9 +198,9 @@ It is also possible to just `pacstrap` another installation from ground up like 
     ```
     INITRD  /initramfs-linux-aarch64-rockchip-rk3588-bsp5.10-orangepi.img
     ```
-  - `FDT` for Flattened Device Tree, or Device Tree Blob, similary, e.g. 
+  - `FDTDIR` for Flattened Device Tree (or Device Tree Blob) Directory, similary, e.g. 
     ```
-    FDT  /dtbs/linux-aarch64-rockchip-rk3588-bsp5.10-orangepi/rockchip/rk3588-orangepi-5-plus.dtb
+    FDTDIR  /dtbs/linux-aarch64-rockchip-rk3588-bsp5.10-orangepi
     ```
   - `FDTOVERLAYS` is for a list for FDT/DTB overlays, only needed when you need the overlays, e.g.
     ```
@@ -188,33 +233,6 @@ As a alternative, the archlinuxcn repo also hosts pre-built kernels based on my 
 _Some of the arch-independent ones are available from AUR so you can use AUR helpers like `yay` to keep them up-to-date by building by yourself (arch-specific ones like kernels, drivers, MPP-related, etc were previous available on AUR but they're either removed or will be removed soon as AUR is purging non pure-x86_64-arch packages)._
 
 The main benefit of the repo is that you can use simply `pacman -Syu` to keep the kernels up-to-date, and install some packages conveniently which are needed for the following steps.
-
-### Kernel selection
-The images pack two different kernel packages, [linux-aarch64-rockchip-rk3588-bsp5.10-orangepi](https://github.com/7Ji-PKGBUILDs/linux-aarch64-rockchip-rk3588-bsp5.10-orangepi), which tracks the revision orangepi uses internal in their [build system](https://github.com/orangepi-xunlong/orangepi-build/tree/next/external/config/boards), and [linux-aarch64-rockchip-rk3588-bsp5.10-orangepi-git](https://github.com/7Ji-PKGBUILDs/linux-aarch64-rockchip-rk3588-bsp5.10-orangepi-git), which tracks directly their kernel tree.
-
-All my kernel pacakges available under my repo do not conflict with each other, including these two.
-
-As of this writting, the non-git version is at `5.10.110-6`, and the -git version is at `5.10.160.r48.eb1c681e5.ced0156-1`. The default boot target is the non-git version, but I highly recommend to migrate to the -git version.
-
-The booting configration `/boot/extlinux/extlinux.conf` should look like this in a new installation:
-```
-DEFAULT linux-aarch64-rockchip-rk3588-bsp5.10-orangepi
-LABEL   linux-aarch64-rockchip-rk3588-bsp5.10-orangepi
-        LINUX   /vmlinuz-linux-aarch64-rockchip-rk3588-bsp5.10-orangepi
-        INITRD  /initramfs-linux-aarch64-rockchip-rk3588-bsp5.10-orangepi-fallback.img
-        FDT     /dtbs/linux-aarch64-rockchip-rk3588-bsp5.10-orangepi/rockchip/rk3588s-orangepi-5.dtb
-        FDTOVERLAYS     /dtbs/linux-aarch64-rockchip-rk3588-bsp5.10-orangepi/rockchip/overlay/rk3588-ssd-sata0.dtbo
-        APPEND  root=UUID=61c8756a-f424-4f05-99e9-0318ad48afa8 rw
-LABEL   linux-aarch64-rockchip-rk3588-bsp5.10-orangepi-git
-        LINUX   /vmlinuz-linux-aarch64-rockchip-rk3588-bsp5.10-orangepi-git
-        INITRD  /initramfs-linux-aarch64-rockchip-rk3588-bsp5.10-orangepi-git-fallback.img
-        FDT     /dtbs/linux-aarch64-rockchip-rk3588-bsp5.10-orangepi-git/rockchip/rk3588s-orangepi-5.dtb
-        FDTOVERLAYS     /dtbs/linux-aarch64-rockchip-rk3588-bsp5.10-orangepi-git/rockchip/overlay/rk3588-ssd-sata0.dtbo
-        APPEND  root=UUID=61c8756a-f424-4f05-99e9-0318ad48afa8 rw
-```
-To switch the version, simple modify the `DEFAULT` line and point it to a different `LABEL`.
-
-If you want to be able to change the booting target interactively during the boot process, you can add a line like `TIMEOUT 30` after the `DEFAULT` line, which means to wait for 3 seconds to let you make the choice. Personally I feel this a waste of time because I use them as headless servers.
 
 ### Desktop environment
 

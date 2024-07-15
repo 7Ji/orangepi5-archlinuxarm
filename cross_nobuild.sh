@@ -149,10 +149,10 @@ check_identity_map_root() {
 
 config_repos() {
     if [[ "${pkg_from_local_mirror}" ]]; then
-        mirror_archlinux=${mirror_archlinux:-http://repo.lan:9129/repo/archlinux}
-        mirror_archlinuxarm=${mirror_alarm:-http://repo.lan:9129/repo/archlinuxarm}
-        mirror_archlinuxcn=${mirror_archlinuxcn:-http://repo.lan:9129/repo/archlinuxcn_x86_64}
-        mirror_7Ji=${mirror_7Ji:-http://repo.lan/7Ji}
+        mirror_archlinux=${mirror_archlinux:-http://repo.7ji.lan/archlinux}
+        mirror_archlinuxarm=${mirror_alarm:-http://repo.7ji.lan/archlinuxarm}
+        mirror_archlinuxcn=${mirror_archlinuxcn:-http://repo.7ji.lan/archlinuxcn}
+        mirror_7Ji=${mirror_7Ji:-http://repo.7ji.lan/7Ji}
     else
         mirror_archlinux=${mirror_archlinux:-https://geo.mirror.pkgbuild.com}
         mirror_archlinuxarm=${mirror_alarm:-http://mirror.archlinuxarm.org}
@@ -441,9 +441,9 @@ set_parts() {
     spart_firstlba='34'
     spart_idbloader='start=64, size=960, type=8DA63339-0007-60C0-C436-083AC8230908, name="idbloader"'
     spart_uboot='start=1024, size=6144, type=8DA63339-0007-60C0-C436-083AC8230908, name="uboot"'
-    spart_size_all=2048
+    spart_size_all=3072
     spart_off_boot=4
-    spart_size_boot=256
+    spart_size_boot=512
     local skt_off_boot=$(( ${spart_off_boot} * 2048 ))
     local skt_size_boot=$(( ${spart_size_boot} * 2048 ))
     spart_boot='start='"${skt_off_boot}"', size='"${skt_size_boot}"', type=C12A7328-F81F-11D2-BA4B-00A0C93EC93B, name="alarmboot"'
@@ -611,6 +611,8 @@ prepare_host() {
 
 image_boot() {
     local image=cache/boot.img
+    echo 'Imaging boot partition, partition size:'
+    du -sh cache/root/boot
     rm -f "${image}"
     truncate -s "${spart_size_boot}"M "${image}"
     mkfs.vfat -n 'ALARMBOOT' -F 32 -i "${uuid_boot_mkfs}" "${image}"
@@ -623,6 +625,8 @@ cleanup_boot() {
 
 image_root() {
     local image=cache/root.img
+    echo 'Imaging root partition, partition size:'
+    du -sh --exclude cache/root/boot cache/root
     rm -f "${image}"
     truncate -s "${spart_size_root}"M "${image}"
     mkfs.ext4 -L 'ALARMROOT' -m 0 -U "${uuid_root}" -d cache/root "${image}"
@@ -750,7 +754,7 @@ if [[ "${#install_pkgs_normal[@]}" == 0 ]]; then
 fi
 
 if [[ "${#install_pkgs_kernel[@]}" == 0 ]]; then
-    install_pkgs_kernel=(linux-aarch64-rockchip-rk3588-bsp5.10-orangepi{,-git})
+    install_pkgs_kernel=(linux-aarch64-{rockchip-{rk3588-bsp5.10-orangepi,bsp6.1-joshua,armbian}-git,7ji})
 fi
 
 if [[ -z "${uuid_root}" ]]; then
