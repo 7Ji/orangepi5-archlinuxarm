@@ -43,7 +43,6 @@ None of the `*.img` releases would resize the root partition on boot, if you wan
 The images pack four different kernel packages:
 - [linux-aarch64-rockchip-rk3588-bsp5.10-orangepi-git](https://github.com/7Ji-PKGBUILDs/linux-aarch64-rockchip-rk3588-bsp5.10-orangepi-git), which tracks directly Orange Pi's BSP 5.10 kernel tree, _5.10.160 as of writing_, is the default kernel to boot, it's stable and ready to use.
 - [linux-aarch64-rockchip-bsp6.1-joshua-git](https://github.com/7Ji-PKGBUILDs/linux-aarch64-rockchip-bsp6.1-joshua-git), which tracks Joshua Reik's [BSP 6.1 kernel tree](https://github.com/Joshua-Riek/linux-rockchip), with [Hüseyin BIYIK](https://github.com/hbiyik)'s panthor backport, _6.1.75 as of writing_, is recommended if you want both stability and kind-of cutting edge features.
-- [linux-aarch64-rockchip-armbian-git](https://github.com/7Ji-PKGBUILDs/linux-aarch64-rockchip-armbian-git), which tracks mainline with many backported patches, is the only one that releases mainline release candidates, _6.10-rc7 as of writing_, is recommended if you want cutting edge features like in-tree panthor.
 - [linux-aarch64-7ji](https://github.com/7Ji-PKGBUILDs/linux-aarch64-7ji), which tracks mostly mainline, but with [a few of my patches](https://github.com/7Ji/linux) applied, _6.9.6 as of writing_, is recommended if you want stable mainline releases.
 
 
@@ -63,12 +62,6 @@ LABEL   linux-aarch64-rockchip-bsp6.1-joshua-git
         INITRD  /booster-linux-aarch64-rockchip-bsp6.1-joshua-git.img
         #FDTDIR /dtbs/linux-aarch64-rockchip-bsp6.1-joshua-git
         FDT     /dtbs/linux-aarch64-rockchip-bsp6.1-joshua-git/rockchip/rk3588s-orangepi-5.dtb
-        APPEND  root=UUID=a701c18a-e0fb-45c9-9fcf-0a959f665de8 rw
-LABEL   linux-aarch64-rockchip-armbian-git
-        LINUX   /vmlinuz-linux-aarch64-rockchip-armbian-git
-        INITRD  /booster-linux-aarch64-rockchip-armbian-git.img
-        #FDTDIR /dtbs/linux-aarch64-rockchip-armbian-git
-        FDT     /dtbs/linux-aarch64-rockchip-armbian-git/rockchip/rk3588s-orangepi-5.dtb
         APPEND  root=UUID=a701c18a-e0fb-45c9-9fcf-0a959f665de8 rw
 LABEL   linux-aarch64-7ji
         LINUX   /vmlinuz-linux-aarch64-7ji
