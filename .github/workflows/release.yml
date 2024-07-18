@@ -34,6 +34,7 @@ jobs:
           for i in bin src; do
             if [[ -f $i.tar ]]; then
               tar -xf $i.tar
+              rm -f $i.tar
             fi
           done
       - name: Cross build
