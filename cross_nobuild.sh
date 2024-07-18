@@ -523,7 +523,7 @@ ${spart_root}"
     done
 }
 
-release() {
+release_mt() {
     pids_gzip=()
     rm -rf out/latest
     mkdir out/latest
@@ -534,6 +534,26 @@ release() {
     done
     echo "Waiting for gzip processes to end..."
     wait ${pids_gzip[@]}
+}
+
+release_st() {
+    rm -rf out/latest
+    mkdir out/latest
+    for suffix in "${suffixes[@]}"; do
+        gzip -9 out/"${build_id}-${suffix}"
+        ln -s ../"${build_id}-${suffix}".gz out/latest/
+    done
+}
+
+release() {
+    echo "Current disk space utilization:"
+    df -h 
+    # Todo: figure out if we're running out of space and only do st when we actually are
+    if [[ "${release_multi_threaded}" ]]; then
+        release_mt
+    else
+        release_st
+    fi
 }
 
 get_subid() { #1 name #2 uid, #3 type
