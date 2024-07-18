@@ -770,7 +770,7 @@ if [[ "${#install_pkgs_bootstrap[@]}" == 0 ]]; then
 fi
     
 if [[ "${#install_pkgs_normal[@]}" == 0 ]]; then
-    install_pkgs_normal=(vim nano sudo openssh linux-firmware-orangepi-git usb2host)
+    install_pkgs_normal=(vim nano sudo openssh 7Ji/linux-firmware linux-firmware-orangepi-git usb2host)
 fi
 
 if [[ "${#install_pkgs_kernel[@]}" == 0 ]]; then
