@@ -40,10 +40,9 @@ Download rkloaders from my another project [orangepi5-rkloader](https://github.c
 None of the `*.img` releases would resize the root partition on boot, if you want the remaining space be taken, you'll need to resize by yourself, either before booting (recommended) or after booting (dangerous). Do so on Linux with `fdisk` deleting old -> creating new not earsing ext4 signature -> `e2fsck -f` -> `resize2fs`.
 
 ## Optional: Kernel selection
-The images pack four different kernel packages:
+The images pack two different kernel packages:
 - [linux-aarch64-rockchip-rk3588-bsp5.10-orangepi-git](https://github.com/7Ji-PKGBUILDs/linux-aarch64-rockchip-rk3588-bsp5.10-orangepi-git), which tracks directly Orange Pi's BSP 5.10 kernel tree, _5.10.160 as of writing_, is the default kernel to boot, it's stable and ready to use.
 - [linux-aarch64-rockchip-bsp6.1-joshua-git](https://github.com/7Ji-PKGBUILDs/linux-aarch64-rockchip-bsp6.1-joshua-git), which tracks Joshua Reik's [BSP 6.1 kernel tree](https://github.com/Joshua-Riek/linux-rockchip), with [Hüseyin BIYIK](https://github.com/hbiyik)'s panthor backport, _6.1.75 as of writing_, is recommended if you want both stability and kind-of cutting edge features.
-- [linux-aarch64-7ji](https://github.com/7Ji-PKGBUILDs/linux-aarch64-7ji), which tracks mostly mainline, but with [a few of my patches](https://github.com/7Ji/linux) applied, _6.9.6 as of writing_, is recommended if you want stable mainline releases.
 
 
 The booting configration `/boot/extlinux/extlinux.conf` (`extlinux/extlinux.conf` in the boot partition, 3rd on disk if you're using `*.img` releases) should look like this in a new installation:
@@ -63,16 +62,14 @@ LABEL   linux-aarch64-rockchip-bsp6.1-joshua-git
         #FDTDIR /dtbs/linux-aarch64-rockchip-bsp6.1-joshua-git
         FDT     /dtbs/linux-aarch64-rockchip-bsp6.1-joshua-git/rockchip/rk3588s-orangepi-5.dtb
         APPEND  root=UUID=a701c18a-e0fb-45c9-9fcf-0a959f665de8 rw
-LABEL   linux-aarch64-7ji
-        LINUX   /vmlinuz-linux-aarch64-7ji
-        INITRD  /booster-linux-aarch64-7ji.img
-        #FDTDIR /dtbs/linux-aarch64-7ji
-        FDT     /dtbs/linux-aarch64-7ji/rockchip/rk3588s-orangepi-5.dtb
-        APPEND  root=UUID=a701c18a-e0fb-45c9-9fcf-0a959f665de8 rw
 ```
 On booting, you would be prompted for which kernel to boot on serial console, and after 3 seconds the one defined at `DEFAULT` would be chosen.
 
 To switch default version, modify the `DEFAULT` line and point it to a different `LABEL`.
+
+There're also other kernel packages that you can install from my repo, these are not pre-installed as they're not considered production-ready:
+- [linux-aarch64-7ji](https://github.com/7Ji-PKGBUILDs/linux-aarch64-7ji), which tracks mostly mainline, but with [a few of my patches](https://github.com/7Ji/linux) applied, _6.9.6 as of writing_, is recommended if you want stable mainline releases. Currently this does not have working HDMI video output.
+- [linux-aarch64-rockchip-armbian-git](https://github.com/7Ji-PKGBUILDs/linux-aarch64-rockchip-armbian-git), which tracks mainline with many backported patches, is the only one that releases mainline release candidates, _6.10-rc7 as of writing_, is recommended if you want cutting edge features like in-tree panthor. Currently this does not have working HDMI video output.
 
 ## Optional: Boot Configuration
 If you're not using the dedicated images, but using `-base.img` or `-root.tar`, then you need to adapt the bootup configurations. In other word, skip this part if you're using `-5/5_sata/5b/5_plus.img`.
@@ -180,7 +177,7 @@ It is also possible to just `pacstrap` another installation from ground up like 
 - It's not recommended to use fs or fs features added after 5.10.110.
 - It's recommendded to only create two partitions, one with FAT32 mounted at `/boot`, and another with your perferred root fs mounted at `/`
   - Alternatively, the u-boot supports to read from an `ext4` partition, so you can just have one big root partition. 
-- Use `linux-aarch64-rockchip-rk3588-bsp5.10-orangepi-git` (or any other, check the [Kernel selection](#kernel-selection) section below for available kernels) instead of `linux` as your kernel, `linux` is mainline kernel from ALARM official repo and won't work.
+- Use `linux-aarch64-rockchip-rk3588-bsp5.10-orangepi-git` (or any other, check the [Kernel selection](#optional-kernel-selection) section below for available kernels) instead of `linux` as your kernel, `linux` is mainline kernel from ALARM official repo and won't work.
 - Use `linux-firmware-orangepi-git` instead of `linux-firmware` as your firmware, this contains essential wireless firmware for 5b. For 5+ or 5, `linux-firmware` also work, but takes more space
 - The boot configuration is `(/boot/)extlinux/extlinux.conf` inside the boot partition, and it uses a similar format to [syslinux format documented on ArchWiki](https://wiki.archlinux.org/title/Syslinux#Configuration).
   - `LINUX` is the path of kernel relative to the filesystem root, e.g. 
@@ -233,9 +230,19 @@ The released images and rootfs/pkg archives in this repo are bare-minimum CLI im
 
 You can follow https://wiki.archlinux.org/title/Desktop_environment to install a desktop environment you like, ignoring any part related to GPU drivers. After installtion you should end up with `mesa` as your OpenGL library providing software-based `llvmpipe` rendering pipeline, which can be checked by running `glxinfo` in your DE.
 
-### GPU / 3D Acceleration
+### GPU / 3D Acceleration (mainline panthor)
 
-You can install panfork mesa and the firmware to enable GPU accelration:
+On `linux-aarch64-rockchip-bsp6.1-joshua-git`, you can use the mainline Panthor driver backported by hbiyik, it needs the corresponding userspace patched `mesa` to work properly:
+```
+sudo pacman -Syu mesa-panvk-git
+```
+
+A reboot is neccessary if you've started any GPU work (e.g. entering your DE) during this boot.
+
+### GPU / 3D Acceleration (vendor blob)
+
+On `linux-aarch64-rockchip-rk3588-bsp5.10-orangepi-git`, you need to use the blob ARM Mali driver, it also needs the corresponding userspace patched `mesa` to work properly:
+
 ```
 sudo pacman -Syu mesa-panfork-git mali-valhall-g610-firmware
 ```
@@ -290,13 +297,8 @@ Here're a few performance comparisons for the drivers:
 
 A rockchip mpp (multi-media processing platform) enabled ffmpeg pacakge is also available from https://github.com/7Ji/archrepo that can do hardware based video encoding/decoding, it could be used directly for transcoding, and should also effortlessly make any video players that depend on it do hardware encoding/decoding.
 ```
-sudo pacman -Syu ffmpeg-mpp
+sudo pacman -Syu ffmpeg-mpp-git
 ```
-
-Addtionally, install ffmpeg4.4-mpp, if you want to use `VLC` (basically the only video player that still uses `ffmpeg4.4` in Arch repo):
-   ```
-   sudo pacman -Syu ffmpeg4.4-mpp
-   ```
 
 ### Hardware video decoding web browser
 

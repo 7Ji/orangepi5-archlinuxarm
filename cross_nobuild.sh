@@ -754,7 +754,7 @@ if [[ "${#install_pkgs_normal[@]}" == 0 ]]; then
 fi
 
 if [[ "${#install_pkgs_kernel[@]}" == 0 ]]; then
-    install_pkgs_kernel=(linux-aarch64-{rockchip-{rk3588-bsp5.10-orangepi,bsp6.1-joshua}-git,7ji})
+    install_pkgs_kernel=(linux-aarch64-rockchip-{rk3588-bsp5.10-orangepi,bsp6.1-joshua}-git)
 fi
 
 if [[ -z "${uuid_root}" ]]; then
