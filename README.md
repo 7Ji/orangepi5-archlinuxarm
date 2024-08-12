@@ -175,7 +175,7 @@ It is also possible to just `pacstrap` another installation from ground up like 
 - The boot partition needs to be marked as EFI system partition in the GPT, if it's not the first partition.
   - The u-boot picks GPT/MBR ESP -> MBR Boot -> first partition, as the partition to look for boot configuration.
 - It's not recommended to use fs or fs features added after 5.10.110.
-- It's recommendded to only create two partitions, one with FAT32 mounted at `/boot`, and another with your perferred root fs mounted at `/`
+- It's recommended to only create two partitions, one with FAT32 mounted at `/boot`, and another with your preferred root fs mounted at `/`
   - Alternatively, the u-boot supports to read from an `ext4` partition, so you can just have one big root partition. 
 - Use `linux-aarch64-rockchip-rk3588-bsp5.10-orangepi-git` (or any other, check the [Kernel selection](#optional-kernel-selection) section below for available kernels) instead of `linux` as your kernel, `linux` is mainline kernel from ALARM official repo and won't work.
 - Use `linux-firmware-orangepi-git` instead of `linux-firmware` as your firmware, this contains essential wireless firmware for 5b. For 5+ or 5, `linux-firmware` also work, but takes more space
