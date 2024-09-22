@@ -490,9 +490,20 @@ ${spart_root}"
         fi
         model="${rkloader%:*}"
         model="${model#*:}"
-        if [[ "${model}" == 'orangepi_5_sata' ]]; then # We're running out of GH runner disk space, skip 5 sata which nearly nobody uses
+        case ${model#orangepi_5} in
+        b)
+            fdt='rk3588s-orangepi-5b.dtb'
+        ;;
+        _plus)
+            fdt='rk3588-orangepi-5-plus.dtb'
+        ;;
+        '')
+            fdt='rk3588s-orangepi-5.dtb'
+        ;;
+        *)
             continue
-        fi
+        ;;
+        esac
         name="${rkloader##*:}"
         suffix="rkloader-${model}".img
         suffixes+=("${suffix}")
@@ -502,17 +513,6 @@ ${spart_root}"
         cp "${base_image}" "${temp_image}"
         gzip -cdk src/rkloader/"${name}" | dd of="${temp_image}" conv=notrunc
         sfdisk "${temp_image}" <<< "${table}"
-        case ${model#orangepi_} in
-        5b)
-            fdt='rk3588s-orangepi-5b.dtb'
-        ;;
-        5_plus)
-            fdt='rk3588-orangepi-5-plus.dtb'
-        ;;
-        *) # 5, 5_sata
-            fdt='rk3588s-orangepi-5.dtb'
-        ;;
-        esac
         # \n\tFDTOVERLAYS\t/dtbs/linux-aarch64-orangepi5/rockchip/overlay/rk3588-ssd-sata0.dtbo
         sed 's|rk3588s-orangepi-5.dtb|'"${fdt}"'|' cache/extlinux.conf > cache/extlinux.conf.temp
         if [[ ${model} == '5_sata' ]]; then
