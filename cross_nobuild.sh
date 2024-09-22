@@ -490,6 +490,9 @@ ${spart_root}"
         fi
         model="${rkloader%:*}"
         model="${model#*:}"
+        if [[ "${model}" == 'orangepi_5_sata' ]]; then # We're running out of GH runner disk space, skip 5 sata which nearly nobody uses
+            continue
+        fi
         name="${rkloader##*:}"
         suffix="rkloader-${model}".img
         suffixes+=("${suffix}")
