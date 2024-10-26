@@ -2,7 +2,7 @@
 
 **This project is neither affiliated with ArchLinuxARM, ArchLinux nor OrangePi, it's my personal project and I purchased all the needed hardware by myself.**
 
-**An rootless distro-independent and architecture-independent Arch and Arch-derived image builder _aimager_ is under development and it would replace this in the long term. Please don't do feature request on this project.**
+**An rootless distro-independent and architecture-independent Arch and Arch-derived image builder [_aimager_](https://github.com/7Ji/aimager) is under development and it would replace this in the long term. Please don't do feature request on this project.**
 
 ## Installation
 Download a type of release from the [nightly release page](https://github.com/7Ji/orangepi5-archlinuxarm/releases/tag/nightly), there're multiple types of releases to choose from
