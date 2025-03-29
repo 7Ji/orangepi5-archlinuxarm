@@ -69,9 +69,10 @@ On booting, you would be prompted for which kernel to boot on serial console, an
 
 To switch default version, modify the `DEFAULT` line and point it to a different `LABEL`.
 
-There're also other kernel packages that you can install from my repo, these are not pre-installed as they're not considered production-ready:
-- [linux-aarch64-7ji](https://github.com/7Ji-PKGBUILDs/linux-aarch64-7ji), which tracks mostly mainline, but with [a few of my patches](https://github.com/7Ji/linux) applied, _6.9.6 as of writing_, is recommended if you want stable mainline releases. Currently this does not have working HDMI video output.
-- [linux-aarch64-rockchip-armbian-git](https://github.com/7Ji-PKGBUILDs/linux-aarch64-rockchip-armbian-git), which tracks mainline with many backported patches, is the only one that releases mainline release candidates, _6.10-rc7 as of writing_, is recommended if you want cutting edge features like in-tree panthor. Currently this does not have working HDMI video output.
+There're also other kernel packages that you can install from my repo, these are not pre-installed:
+
+- [linux-aarch64-7ji](https://github.com/7Ji-PKGBUILDs/linux-aarch64-7ji), which tracks mostly mainline, but with [a few of my patches](https://github.com/7Ji/linux) applied, _6.13.9 as of writing_, is recommended if you want stable mainline releases.
+- [linux-aarch64-rockchip-armbian-git](https://github.com/7Ji-PKGBUILDs/linux-aarch64-rockchip-armbian-git), which tracks mainline with many backported patches, is the only one that releases mainline release candidates, _6.14-rc6 as of writing_, is recommended if you want cutting edge features.
 
 ## Optional: Boot Configuration
 If you're not using the dedicated images, but using `-base.img` or `-root.tar`, then you need to adapt the bootup configurations. In other word, skip this part if you're using `-5/5_sata/5b/5_plus.img`.
